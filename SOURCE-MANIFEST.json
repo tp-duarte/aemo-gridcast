@@ -97,7 +97,7 @@
   },
   {
     "path": "deployment/cloudflare/worker.mjs",
-    "sha256": "d822e9ff20fcbfe236a2836bfae47b41bc6c6617ed4bf7834bf1513897b5c98f"
+    "sha256": "84ec89854502a2993a3816ff180709b3ffba34e1d087343dbd122ff0bf51bb97"
   },
   {
     "path": "deployment/cloudflare/wrangler.jsonc",
@@ -141,6 +141,6 @@
   },
   {
     "path": "tests/test_worker.mjs",
-    "sha256": "729908c19af72c716e6b1caf04f1c0428596f4517d36bfec36c52e78baf0ada0"
+    "sha256": "a06273b7e0f9c749136280f485ebeebaed03c45d998cb172c2281f53f024be9a"
   }
 ]

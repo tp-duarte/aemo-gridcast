@@ -14,4 +14,16 @@ r=await worker.fetch(new Request('https://api.example/v1/dashboard',{headers:{Or
 r=await worker.fetch(new Request('https://api.example/v1/dashboard?mode=backtest'),env);assert.equal(r.status,400);
 r=await worker.fetch(new Request('https://api.example/v1/forecasts.csv?region=NSW1'),env);assert.equal(r.status,200);assert.match(r.headers.get('Content-Type'),/text\/csv/);
 issued=new Date(Date.now()-91*60*1000).toISOString();r=await worker.fetch(new Request('https://api.example/health'),env);assert.equal(r.status,503);
+assert.equal((await r.json()).status,'update_delayed');
+for(const minutes of [91,300,1500]){
+ issued=new Date(Date.now()-minutes*60*1000).toISOString();
+ for(const path of ['/v1/dashboard?region=NEM','/v1/forecasts.csv?region=QLD1']){
+  r=await worker.fetch(new Request('https://api.example'+path),env);
+  assert.equal(r.status,200);assert.equal(r.headers.get('X-Forecast-Status'),'update_delayed');
+  assert.equal(await r.text(),'{"schema_version":"1.0"}');
+ }
+}
+issued='invalid';r=await worker.fetch(new Request('https://api.example/v1/dashboard'),env);assert.equal(r.status,503);
+issued=new Date(Date.now()+120000).toISOString();r=await worker.fetch(new Request('https://api.example/v1/dashboard'),env);assert.equal(r.status,503);
+const empty={...env,DATA:{async get(){return null;}}};r=await worker.fetch(new Request('https://api.example/v1/dashboard'),empty);assert.equal(r.status,503);
 assert(reads.every(k=>k.startsWith('public/')));console.log('Worker routing, CORS, private-key isolation, CSV and stale-forecast checks passed.');

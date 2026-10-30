@@ -11,8 +11,13 @@ export default {
   const pointer=await env.DATA.get('public/current.json');
   if(!pointer)return Response.json({status:'awaiting_first_forecast'},{status:503,headers:cors});
   const meta=await pointer.json(),age=(Date.now()-Date.parse(meta.forecast_issued_at))/1000;
-  if(!Number.isFinite(age)||age>5400||age< -60)return Response.json({status:'stale',forecast_issued_at:meta.forecast_issued_at,age_seconds:age},{status:503,headers:cors});
-  if(url.pathname==='/health')return Response.json({status:'ok',...meta,age_seconds:age},{headers:{...cors,'Cache-Control':'no-store'}});
+  if(!Number.isFinite(age)||age< -60)return Response.json({status:'invalid_forecast_timestamp'},{status:503,headers:{...cors,'Cache-Control':'no-store'}});
+  const delayed=age>5400;
+  // Alert monitoring without withholding the immutable last known forecast.
+  if(url.pathname==='/health')return Response.json({...meta,status:delayed?'update_delayed':'ok',age_seconds:age},{status:delayed?503:200,headers:{...cors,'Cache-Control':'no-store'}});
+  cors['X-Forecast-Status']=delayed?'update_delayed':'current';
+  cors['X-Forecast-Issued-At']=meta.forecast_issued_at;
+  cors['Access-Control-Expose-Headers']='X-Forecast-Status, X-Forecast-Issued-At';
   const region=url.searchParams.get('region')||'NEM',mode=url.searchParams.get('mode')||'live';
   if(!regions.has(region)||mode!=='live')return Response.json({error:'This endpoint serves live saved forecasts only',available_modes:['live']},{status:400,headers:cors});
   if(!/^\d{8}T\d{12}$/.test(meta.snapshot))return new Response('Invalid snapshot pointer',{status:503,headers:cors});
