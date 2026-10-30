@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import worker from '../deployment/cloudflare/worker.mjs';
+let issued=new Date().toISOString(),reads=[];
+const env={ALLOWED_ORIGIN:'https://portfolio.example',DATA:{async get(key){reads.push(key);if(key==='public/current.json')return {async json(){return {snapshot:'20261029T120000123456',forecast_issued_at:issued,generated_at:issued}}};return {body:'{"schema_version":"1.0"}',httpEtag:'"test"'};}}};
+let r=await worker.fetch(new Request('https://api.example/v1/dashboard?region=NEM&mode=live',{headers:{Origin:env.ALLOWED_ORIGIN}}),env);assert.equal(r.status,200);assert.equal(r.headers.get('Access-Control-Allow-Origin'),env.ALLOWED_ORIGIN);
+r=await worker.fetch(new Request('https://api.example/models/current.json'),env);assert.equal(r.status,404);
+r=await worker.fetch(new Request('https://api.example/v1/dashboard?region=../../models'),env);assert.equal(r.status,400);
+r=await worker.fetch(new Request('https://api.example/v1/dashboard',{headers:{Origin:'https://other.example'}}),env);assert.equal(r.status,403);
+r=await worker.fetch(new Request('https://api.example/v1/dashboard?mode=backtest'),env);assert.equal(r.status,400);
+r=await worker.fetch(new Request('https://api.example/v1/forecasts.csv?region=NSW1'),env);assert.equal(r.status,200);assert.match(r.headers.get('Content-Type'),/text\/csv/);
+issued=new Date(Date.now()-91*60*1000).toISOString();r=await worker.fetch(new Request('https://api.example/health'),env);assert.equal(r.status,503);
+assert(reads.every(k=>k.startsWith('public/')));console.log('Worker routing, CORS, private-key isolation, CSV and stale-forecast checks passed.');

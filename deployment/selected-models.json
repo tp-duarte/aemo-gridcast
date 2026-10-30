@@ -1,0 +1,58 @@
+{
+  "protocol_sha256": "f846f8338e7eda0f19e1f2accfe0ab139079219bf3d3bfe892a8fda76da1c800",
+  "winners": {
+    "NSW1": {
+      "lightgbm": "lgb_2_linear1",
+      "sarima": "sarima_sma"
+    },
+    "QLD1": {
+      "lightgbm": "lgb_2_linear1",
+      "sarima": "sarima_sma"
+    },
+    "VIC1": {
+      "lightgbm": "lgb_2_linear1",
+      "sarima": "sarima_sma"
+    },
+    "SA1": {
+      "lightgbm": "lgb_2_linear1",
+      "sarima": "sarima_sma"
+    },
+    "TAS1": {
+      "lightgbm": "lgb_2_linear1",
+      "sarima": "sarima_sma"
+    }
+  },
+  "criterion": "per region/family minimum equal-month mean MAE divided by that month seasonal MAE; all 12 successful folds required; SARIMA must converge in every fold",
+  "candidate_specs": {
+    "lgb_2_linear1": {
+      "family": "lightgbm",
+      "parameters": {
+        "n_estimators": 250,
+        "learning_rate": 0.04,
+        "num_leaves": 31,
+        "max_depth": 6,
+        "min_child_samples": 80,
+        "reg_lambda": 10,
+        "linear_tree": true,
+        "linear_lambda": 10
+      }
+    },
+    "sarima_sma": {
+      "family": "sarima",
+      "parameters": {
+        "order": [
+          1,
+          0,
+          0
+        ],
+        "seasonal_order": [
+          0,
+          1,
+          1,
+          24
+        ],
+        "maxiter": 60
+      }
+    }
+  }
+}

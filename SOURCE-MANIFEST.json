@@ -1,0 +1,138 @@
+[
+  {
+    "path": "gridcast/aemo.py",
+    "sha256": "60fdd3107be9aeddf2bd9bd022a6b52b0229b5a425c5c3605d1862df4912812f"
+  },
+  {
+    "path": "gridcast/artifacts.py",
+    "sha256": "93eb941531d78c65b85393f9657aa891524953e36cb1747101fdb0c9af584933"
+  },
+  {
+    "path": "gridcast/batch.py",
+    "sha256": "eeb8f61ec0a1aee251ba3ae9b2e2d4fb86237c4d1329a97782a8c22134d17935"
+  },
+  {
+    "path": "gridcast/cli.py",
+    "sha256": "cb34daf5987d28ec08b9e34f62d06481d0c0dff635d34899a9c952a672ef21c9"
+  },
+  {
+    "path": "gridcast/data.py",
+    "sha256": "67f7dcc746bc861674717c75a98cb518c00f56009487d4e5a155806b08e8522c"
+  },
+  {
+    "path": "gridcast/hourly.py",
+    "sha256": "fae937758bace5905cfee3c470390ea79021229bbff2342739ca672439673c24"
+  },
+  {
+    "path": "gridcast/metrics.py",
+    "sha256": "5c173fcfbaa2ef636866b710cc129e584b9ed445009a79fa0817f3ba409941c8"
+  },
+  {
+    "path": "gridcast/models.py",
+    "sha256": "a7916096e47c95bdea9c3a00b2449456ed1037c42a39fde2ad5a8045b3f28492"
+  },
+  {
+    "path": "gridcast/monitoring.py",
+    "sha256": "908dfd0490dd453d902d874e6a522378e5ea3ac7c6a2d1213547c859b08f12e0"
+  },
+  {
+    "path": "gridcast/object_store.py",
+    "sha256": "46a938016d9a77977026b13d70ace8fee6db9375c134e1ab45d7feed02df99b0"
+  },
+  {
+    "path": "gridcast/pipeline.py",
+    "sha256": "70367188969e16b87108a4bea0dcfa58ed9cb0118acdca904ba1752438869b8a"
+  },
+  {
+    "path": "gridcast/reconciliation.py",
+    "sha256": "012784939717d815438f389d2d8bf444a0372e244eaba7b8e0cb996199580f4c"
+  },
+  {
+    "path": "gridcast/server.py",
+    "sha256": "e3c8956a9fcdad25e6f99cd07c79ba51533cf4f9159f02e37869c5f78827bc1a"
+  },
+  {
+    "path": "gridcast/store.py",
+    "sha256": "dd49ce2ef3bdb1cef426d932dcde0a4581ed35520046c1f6f1481df5563f336d"
+  },
+  {
+    "path": "gridcast/tuning.py",
+    "sha256": "449ad39b02ab006964a2389ee123c5117c75ffd49e6709a0e513a17424d9c553"
+  },
+  {
+    "path": "gridcast/weather.py",
+    "sha256": "dcfd9b374a66688c8cddb026d82d3646b766e4a0527743b66becd1332b9e0c13"
+  },
+  {
+    "path": "gridcast/__init__.py",
+    "sha256": "1bcd6c685a82d6ef9982d870371dd111721ac6154539c0be10722c9c898efddc"
+  },
+  {
+    "path": "gridcast/dashboard.html",
+    "sha256": "5e19b79d72af832513954d3421aae9a24e89f2462adfcc03756c925bd24d08f6"
+  },
+  {
+    "path": "pyproject.toml",
+    "sha256": "db57d2766f327b734d4ad008e3d8b087a0ded29b0960191e8d60b91c27a5d387"
+  },
+  {
+    "path": "requirements-lock.txt",
+    "sha256": "56c04c0a0a40c2883fb8cd0aeda2c0276fbb7bbfd40a4d60c4138de3a2336231"
+  },
+  {
+    "path": "requirements-cloud.txt",
+    "sha256": "c7738f20c6c6bb268f224afe7d202570a98b784834223fe081785d8aa864b49d"
+  },
+  {
+    "path": "CLOUDFLARE-HOURLY.md",
+    "sha256": "cb2c87245382d440275f7b8c7b9f87a14857451e24bf184bbd8bae0c2dc63f15"
+  },
+  {
+    "path": "deployment/selected-models.json",
+    "sha256": "dbd02affa4458afc12193e68f09500cf062f5b07f92a0669d84edc052906262a"
+  },
+  {
+    "path": "deployment/cloudflare/worker.mjs",
+    "sha256": "e4a8942b44d69a7267b580f0cac632cfd5a48cf421a43c45352de2bf0b068308"
+  },
+  {
+    "path": "deployment/cloudflare/wrangler.jsonc",
+    "sha256": "8acd6c5611f348ed590b078ab1ce515697f4cbd33dfc07d2c83eb8758a3d07c5"
+  },
+  {
+    "path": "deployment/github/hourly.yml",
+    "sha256": "df0eb270ff1d394c88774dcc0a5cec0894403400ef8d7698a54a4f2c024499f5"
+  },
+  {
+    "path": "deployment/github/train.yml",
+    "sha256": "0bacc2ec551a83e6d0e59ba5dc0a0a86cd315c7d65584ad88dcc4706fa171a2f"
+  },
+  {
+    "path": "tests/test_artifacts.py",
+    "sha256": "ffb68cc7f4eb7b557617cafe4f9f12a42d88562dd3fec9c7fcd17a0ad2dec301"
+  },
+  {
+    "path": "tests/test_hourly.py",
+    "sha256": "6e533dca867a0d6a60825ccc449e9d003b4012cb6190b36c39cf1fc458ac5567"
+  },
+  {
+    "path": "tests/test_tuning.py",
+    "sha256": "7a1dfea0f3f4d669e26b52ce8005b4580222282b303462636f7ee6b2b5d88b6c"
+  },
+  {
+    "path": "tests/test_batch.py",
+    "sha256": "bc8814f2044f33fcd1a6c70623f26ce45a8676671e8af1465f50f62cb77a52c5"
+  },
+  {
+    "path": "tests/test_monitoring.py",
+    "sha256": "30e2ebf8a351d0a7113341199ed9d6f6e8019ac3900f5309938fc2e08c764024"
+  },
+  {
+    "path": "tests/test_dispatch_cache.py",
+    "sha256": "26f2973bb9112fec14af00b42e89989069214c165e8fdd9556dc5873e430c7ce"
+  },
+  {
+    "path": "tests/test_worker.mjs",
+    "sha256": "c13bb950f0a8e05d2b3678607181104cedc40c26d91973eb3eac59ed0a6d40dc"
+  }
+]

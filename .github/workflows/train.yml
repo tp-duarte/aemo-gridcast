@@ -1,0 +1,35 @@
+name: Gridcast monthly training
+on:
+  schedule:
+    - cron: '47 3 1 * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gridcast-r2-single-writer
+  cancel-in-progress: false
+jobs:
+  train:
+    if: vars.GRIDCAST_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+      R2_BUCKET: ${{ vars.R2_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            requirements-lock.txt
+            requirements-cloud.txt
+      - run: python -m pip install -r requirements-cloud.txt
+      - name: Train fixed selected configurations and atomically promote model pointer
+        run: python -m gridcast.hourly train --selection deployment/selected-models.json --work .training-work

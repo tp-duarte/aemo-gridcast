@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en"><head><script src="deployment-config.js"></script><script src="assets/theme.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gridcast · AEMO regional forecasting | Thiago Pereira Duarte</title>
+<style>
+:root{color-scheme:light;font:15px system-ui;background:#cfccc3;color:#292620}
+*{box-sizing:border-box}body{max-width:1400px;margin:auto;padding:32px}header{display:flex;justify-content:space-between;align-items:center;gap:20px}
+h1{font-size:32px;letter-spacing:-1px;margin:8px 0}h2{font-size:17px;font-weight:600}p,.muted{color:#615d55}.eyebrow{font:12px monospace;letter-spacing:2px;color:#976649}
+select,a{background:#d9d6cd;color:#292620;border:1px solid #aaa398;border-radius:7px;padding:10px;text-decoration:none}
+section{background:#d9d6cd;border:1px solid #b6b0a4;border-radius:12px;padding:22px}
+section{margin-top:16px}
+.banner{padding:12px 18px;background:#d4d6ca;border:1px solid #a4aa92;border-radius:8px;color:#3f4836;margin-top:24px}
+svg{width:100%;height:auto;display:block}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:right;padding:13px 9px;border-bottom:1px solid #b6b0a4}th:first-child,td:first-child{text-align:left}th{color:#615d55;font-weight:500}.table{overflow:auto}
+.legend{display:flex;gap:22px;flex-wrap:wrap;font-size:12px;color:#615d55}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+pre{white-space:pre-wrap;font-size:12px;color:#615d55;max-height:220px;overflow:auto}footer{padding:24px 0;font-size:12px;color:#615d55}#error{color:#9b3b31}
+@media(max-width:800px){body{padding:18px}.two{grid-template-columns:1fr}header{align-items:start;flex-direction:column}}
+
+.controls{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.controls label{color:#615d55;font-size:13px}.controls select{margin-left:8px}
+.positive{color:#286a60}.negative{color:#9b3b31}
+.chart-wrap{position:relative}.tooltip{position:absolute;pointer-events:none;z-index:2;background:#08121fee;border:1px solid #49617b;border-radius:8px;padding:12px;font:12px/1.8 system-ui;box-shadow:0 8px 25px #0006;min-width:220px;white-space:pre-line}
+svg:focus-visible{outline:2px solid #286a60}.region-note{font-size:13px;border-left:2px solid #48617c;padding-left:12px}.region-note a{padding:0;border:0;background:none;text-decoration:underline}
+@media(max-width:800px){.controls select{max-width:100%}}
+button{background:#d9d6cd;color:#292620;border:1px solid #aaa398;border-radius:7px;padding:10px 15px;font:inherit;cursor:pointer}button[aria-pressed="true"]{border-color:#286a60;background:#38362f;color:#f2efe7}.view-panel{animation:appear .22s ease-out}@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}[hidden]{display:none!important}@media(prefers-reduced-motion:reduce){.view-panel{animation:none}}
+.tooltip-dock{min-height:155px;margin-top:8px;border:1px solid #aaa398;border-radius:8px;background:#d9d6cd}.tooltip{position:static;pointer-events:none;box-shadow:none;border:0;background:transparent;min-width:0;white-space:pre-line;padding:12px 16px;line-height:1.7}.tooltip[hidden]{display:block!important;visibility:hidden}.tooltip-dock:has(.tooltip[hidden])::before{content:"Hover, tap, or focus the chart to inspect values below.";display:block;padding:12px 16px;color:#615d55;font-size:13px}.tooltip-dock:has(.tooltip[hidden]) .tooltip{display:none!important}
+.inspection{min-height:65px;padding:12px 0;white-space:pre-line;color:#615d55;font-size:13px;border-top:1px solid #b6b0a4}.fav-summary{line-height:1.9}svg[tabindex]{touch-action:pan-y}
+#fav{display:block;font-size:34px;font-weight:700;line-height:1.2;margin:12px 0 8px}.evolution-slider{width:min(600px,100%);accent-color:#286a60}.evolution-controls{margin:16px 0}input{font:inherit}
+
+:root{--background:oklch(84% .012 80);--foreground:oklch(24% .008 70);--border:oklch(72% .014 80);--muted-foreground:oklch(41% .01 75);--card:oklch(88% .014 80);background:var(--background);color:var(--foreground);font-family:"Inter Tight",system-ui,sans-serif}
+body{max-width:1400px;padding:32px 36px}h1{font-family:Fraunces,Georgia,serif;font-size:52px;font-weight:500;line-height:1.08;letter-spacing:-1.5px;max-width:750px}h2{font-weight:500;font-size:20px}section{border:0;border-top:1px solid var(--border);border-radius:0;background:transparent;padding:30px 0;margin-top:22px}header{padding:32px 0 16px}.portfolio-nav{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:22px}.portfolio-nav a{border:0;background:none;padding:0}.portfolio-nav a:first-child{font:28px Georgia,serif}
+.banner{border-radius:2px;font-size:13px}.scope-controls{padding:24px 0 0}.eyebrow{font-size:10px;letter-spacing:2.5px;color:var(--muted-foreground)}
+select,button,a{border-radius:4px}button[aria-pressed="true"]{border-color:#38362f}.tooltip-dock{background:var(--card);border-radius:2px}.regional-panels{display:grid;grid-template-columns:1fr 1fr;gap:28px}.regional-panels article{min-width:0;border-top:1px solid var(--border);padding-top:12px}.regional-panels article:last-child{grid-column:1/-1}.regional-values{display:none}.inspection{font-size:12px;line-height:1.7}.positive{color:#286a60}.negative{color:#9b3b31}#fav{font:500 46px Fraunces,Georgia,serif;color:inherit}.controls label{font-size:12px}
+@media(max-width:800px){body{padding:20px}h1{font-size:38px}.regional-panels{grid-template-columns:1fr}.controls{gap:10px}}
+.regional-panels svg text{font-size:20px}
+.floating-values{position:fixed;z-index:10000;pointer-events:none;white-space:pre-line;background:#f4f1e9f5;color:#292620;border:1px solid #aaa398;border-radius:5px;padding:10px 13px;font:12px/1.65 system-ui;box-shadow:0 4px 15px #29262020;max-height:240px;overflow:hidden}.chart-caption{font-size:12px;color:#615d55;line-height:1.8;margin:8px 0 16px}.chart-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:8px 0}.chart-legend span{display:inline-flex;align-items:center;gap:5px}.chart-legend i{display:inline-block;width:22px;border-top:2px dashed}.tooltip-dock{display:none}.inspection{min-height:28px}
+.inspection,#chartReadout{height:32px;min-height:32px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.forecast-update{text-align:right;font-weight:700;color:#292620;font-size:13px}#fav{font:600 clamp(54px,6vw,78px)/1.1 Fraunces,Georgia,serif}.fav-summary{border-left:4px solid #a36f3e;padding-left:20px}.chart-caption{font-weight:600;font-size:17px;color:#292620}#vintage{display:none}#forecastControls{margin-top:22px;margin-bottom:18px}.inspection,#chartReadout{position:absolute;width:1px;height:1px;min-height:0;overflow:hidden;clip-path:inset(50%);padding:0;margin:0;border:0}</style><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/chart-theme.css"></head><body>
+<nav class="portfolio-nav"><a href="portfolio-preview.html">About</a><a href="projects.html" aria-current="page">Projects</a></nav><header><div><div class="eyebrow">PROJECTS / AUSTRALIAN DEMAND FORECAST</div><h1>Australian Demand Forecast</h1><p>AEMO regional electricity demand forecasting.</p><p class="muted">Real source sample · August 2025–September 2026 · 15-minute model intervals</p></div>
+<div><select id="kind" aria-label="Evaluation mode"><option value="backtest">Real-data backtest</option><option value="sample">Next 24h from sample end</option><option value="outlook">Through following day · 48h sample outlook</option><option value="live">Prospective ledger</option></select> <a href="methodology.html">Methodology ↗</a> <a id="export" href="#">Export CSV ↗</a></div></header>
+<div class="banner" id="banner">Loading forecast ledger…</div><p id="error" role="alert"></p>
+<div class="scope-controls controls"><label>Series<select id="region"><option value="NEM">NEM · consolidated</option><option value="NSW1">New South Wales / ACT</option><option value="QLD1">Queensland</option><option value="VIC1">Victoria</option><option value="SA1">South Australia</option><option value="TAS1">Tasmania</option></select></label><span id="scopeLabel" class="muted"></span></div>
+<section><h2>Forecast Added Value (FAV)*</h2>
+<p>How much forecast error do we avoid versus a naive forecast?</p>
+<p id="forecastUpdate" class="forecast-update"></p><div class="controls"><label>Model<select id="favModel"><option value="lightgbm">LightGBM</option><option value="sarima">SARIMA</option><option value="ridge_ar">Ridge AR</option><option value="seasonal_naive">Weighted seasonal baseline</option></select></label>
+<label>Baseline<select id="baseline"><option value="seasonal_naive">Weighted seasonal baseline</option></select></label></div>
+<p class="fav-summary"><strong id="fav">—</strong> FAV · <strong id="favMW">—</strong> average absolute error avoided · <span id="favN">—</span> matched predictions.<br><span id="favStatus"></span> · <span id="favPair" class="muted"></span></p>
+<p class="muted">Single baseline: 40% prior-year average (level-adjusted), 20% monthly, 25% weekly and 15% daily averages. Fixed before backtesting; see Methodology for exact lags.</p><p class="muted">* 7-day backtest, 0–24h in backtest mode; other modes use their matched scored forecasts. FAV = 100 × (1 − model MAE / naive MAE). Positive adds value; negative means more error. Same issue, target and actual revision. Error reduction is not monetary savings.</p>
+</section>
+<section><div class="controls"><h2 id="viewTitle">Latest forecast vintage</h2><button id="forecastView" type="button" aria-pressed="true" aria-controls="forecastPanel">Forecast</button><button id="historyView" type="button" aria-pressed="false" aria-controls="historyPanel">Historical error + FAV</button><button id="evolutionView" type="button" aria-pressed="false" aria-controls="evolutionPanel">Forecast evolution</button></div><div id="forecastPanel" class="view-panel">
+<div class="controls"><label>Forecast layout<select id="layout"><option value="single">Selected series</option><option value="regions">Five regional panels</option></select></label></div><div id="forecastControls" class="controls" role="group" aria-label="Visible forecast models"></div><div id="regionalPanels" class="regional-panels" hidden></div><div id="singleChart"><p id="vintage" class="muted"></p><div class="legend" id="legend"></div><div class="chart-wrap"><div class="chart-legend" id="chartLegend"></div><p class="chart-caption" id="chartMeta"></p><svg id="chart" tabindex="0" viewBox="0 0 1200 310" role="img" aria-label="Forecast chart. Hover, tap, or use left and right arrow keys to inspect values."></svg></div><div class="tooltip-dock" aria-label="Values at the selected timestamp"><div id="chartTip" class="tooltip" hidden></div></div><p id="chartReadout" class="muted" aria-live="polite">Hover or tap to inspect values; keyboard users can focus the chart and use arrow keys.</p><p class="muted">UTC · MW · Nominal 90% prediction ranges for selected models.</p></div></div>
+<div id="historyPanel" class="view-panel" hidden><p id="historySubtitle"></p>
+<p class="muted">Daily MAE by target date (UTC), all scored lead times. FAV uses the same issue, target and actual revision. Partial days can change as actuals arrive; overlapping live forecasts count separately. These curves use the latest actual revisions.</p>
+<h2>Historical absolute error · MW</h2><p class="muted">Teal: selected model · gold: selected naive baseline</p><div class="chart-legend" id="errorHistoryLegend"></div><p class="chart-caption" id="errorHistoryMeta"></p><svg id="errorHistory" tabindex="0" viewBox="0 0 1200 250" role="img" aria-label="Daily matched MAE history"></svg><p id="errorHistoryReadout" class="inspection" aria-live="polite">Hover, tap, or focus the chart and use arrow keys to inspect values.</p>
+<h2>Forecast Added Value · %</h2><p class="muted">Above zero: less error than the baseline. Below zero: more error.</p><div class="chart-legend" id="favHistoryLegend"></div><p class="chart-caption" id="favHistoryMeta"></p><svg id="favHistory" tabindex="0" viewBox="0 0 1200 250" role="img" aria-label="Daily FAV history"></svg><p id="favHistoryReadout" class="inspection" aria-live="polite">Hover, tap, or focus the chart and use arrow keys to inspect values.</p>
+<div class="table"><table><thead><tr><th>UTC target date</th><th>Model MAE · MW</th><th>Naive MAE · MW</th><th>FAV</th><th>Matched predictions</th></tr></thead><tbody id="historyRows"></tbody></table></div></div><div id="evolutionPanel" class="view-panel" hidden>
+<p>Hold a target day fixed and move through saved issue times. Solid teal: selected vintage · dashed gold: preceding vintage · charcoal: latest actuals, shown retrospectively.</p>
+<div class="controls evolution-controls"><label>Target day (UTC)<select id="evolutionDay"></select></label><label>Model<select id="evolutionModel"><option value="lightgbm">LightGBM</option><option value="sarima">SARIMA</option><option value="ridge_ar">Ridge AR</option><option value="seasonal_naive">Weighted seasonal baseline</option></select></label></div>
+<div class="controls"><button id="evolutionPrev" aria-label="Previous forecast issue">← Earlier</button><input type="range" id="evolutionSlider" class="evolution-slider" min="0" max="0" value="0" step="1" aria-label="Forecast issue time"><button id="evolutionNext" aria-label="Next forecast issue">Later →</button></div>
+<p id="evolutionIssued" aria-live="polite"></p><p id="evolutionNote" class="muted"></p>
+<div class="chart-legend" id="evolutionChartLegend"></div><p class="chart-caption" id="evolutionChartMeta"></p><svg id="evolutionChart" tabindex="0" viewBox="0 0 1200 300" role="img" aria-label="Forecast evolution for a fixed UTC target day"></svg>
+<p id="evolutionReadout" class="inspection" aria-live="polite">Hover, tap, or focus the chart to inspect revisions.</p>
+</div></section>
+<section><h2>Overall model performance</h2><p>All scored lead times combined: how well each model performs overall. Lower error is better; positive bias means overprediction. Skill uses matched weighted-seasonal forecasts.</p><div class="table"><table><thead><tr><th>Model</th><th>Samples</th><th>MAE MW</th><th>RMSE MW</th><th>WAPE</th><th>Bias MW</th><th>90% coverage</th><th>FAV vs baseline</th></tr></thead><tbody id="models"></tbody></table></div></section>
+<section><h2>Error by forecast lead time</h2><p>The same forecasts split into 0–6, 6–12, 12–18 and 18–24 hour buckets: how accuracy changes farther into the future. Leads are measured from the training boundary. Lower error is better.</p><div class="controls"><label>Error metric<select id="leadMetric"><option value="mae_mw">MAE · MW</option><option value="rmse_mw">RMSE · MW</option><option value="wape_pct">WAPE · %</option></select></label></div><div class="chart-legend" id="leadChartLegend"></div><p class="chart-caption" id="leadChartMeta"></p><svg id="leadChart" tabindex="0" viewBox="0 0 1200 300" role="img" aria-label="Grouped model errors by lead bucket"></svg><p id="leadChartReadout" class="inspection" aria-live="polite">Hover, tap, or focus the chart and use arrow keys to inspect values.</p>
+<div class="table"><table><thead><tr><th>Lead bucket</th><th>Weighted seasonal</th><th>Ridge AR</th><th>LightGBM</th><th>SARIMA</th></tr></thead><tbody id="horizons"></tbody></table></div></section><section id="drift"><h2>Training data → new observations</h2>
+<p>Compare a saved forecast vintage’s 42-day training window with up to seven subsequent days. The windows do not overlap. Ridge and LightGBM use the regional training window; SARIMA uses its hourly aggregation. The weighted baseline also uses prior-year history; NEM shows aggregate demand, not a separately fitted model.</p>
+<div class="controls"><label>Training vintage<select id="driftRun"></select></label><label>Distribution<select id="driftFeature"><option value="demand">Demand · MW</option><option value="seasonal_residual">Seasonal residual · MW</option><option value="ramp">15-minute demand change · MW</option></select></label></div>
+<p id="driftWindow" class="muted"></p><p>Slate: training distribution · teal: new observations. Shaded Gaussian density curves use a shared bandwidth; area is approximately one. Hover or use arrow keys to inspect density.</p>
+<div class="chart-legend" id="driftChartLegend"></div><p class="chart-caption" id="driftChartMeta"></p><svg id="driftChart" tabindex="0" viewBox="0 0 1200 300" role="img" aria-label="Training and new observed data distributions"></svg><p id="driftReadout" class="inspection" aria-live="polite"></p>
+<div class="table"><table><thead><tr><th>Diagnostic</th><th>Value</th><th>Interpretation</th></tr></thead><tbody id="driftMetrics"></tbody></table></div>
+<p>KS and Cramér–von Mises test the null of equal distributions. Holm correction covers six tests per vintage. Their p-values assume independent observations; 15-minute demand is autocorrelated, so these are exploratory flags, not calibrated alarms or proof of model deterioration. PSI above 0.20 is a review signal. Seasonal residuals subtract training mean demand for the same quarter-hour of the week. Short windows and serial correlation can inflate apparent change. Backtest observations are later historical actuals; prospective mode requires newly ingested data.</p></section>
+<section><h2>Reliability &amp; large errors</h2><p>Read these alongside FAV: narrow intervals are useful only when coverage is adequate. Positive bias means overprediction. Coverage target: 90%; lower interval score is better.</p><div class="table"><table><thead><tr><th>Model</th><th>Bias MW</th><th>P95 absolute error MW</th><th>90% coverage</th><th>Mean interval width MW</th><th>90% interval score MW</th></tr></thead><tbody id="reliability"></tbody></table></div></section>
+<div><section><h2>Data & pipeline diagnostics</h2><p>PSI &gt; 0.20 flags investigation, not automatic retraining. Issue-time context only: previous 28 days versus latest 7 days, both before the latest forecast cutoff. This is separate from the selected post-training comparison above.</p><pre id="diagnostics"></pre><h2>Latest worker event</h2><pre id="events"></pre></section></div>
+<footer>Source: AEMO PRICE_AND_DEMAND / TOTALDEMAND. Backtests use downloaded historical vintages; prospective mode stores new issue-time forecasts. TOTALDEMAND is dispatch demand, not settlement-grade metered consumption. NEM excludes Western Australia and Northern Territory. Refreshes every 30 seconds.</footer>
+<!-- GRIDCAST_DATA -->
+<script>
+// Shared compact hover tooltip. Positioned in the opposite plot corner from the pointer.
+// Shared compact hover tooltip. Positioned in the opposite plot corner from the pointer.
+let floatingTip=null;
+function hideChartTooltip(){if(floatingTip)floatingTip.hidden=true}
+function showChartTooltip(svg,text,event){
+ if(!document.body||!svg.getBoundingClientRect)return;
+ if(!floatingTip){floatingTip=document.createElement('div');floatingTip.className='floating-values';floatingTip.setAttribute('role','tooltip');document.body.append(floatingTip)}
+ floatingTip.replaceChildren();
+ const palette=Object.entries(names).map(([key,label])=>[label,colors[key]]);
+ palette.push(['Training density','#697799'],['New density','#286a60'],['Latest actual',colors.actual],['Selected','#286a60'],['Previous','#a36f3e'],['FAV','#286a60']);
+ for(const line of text.replaceAll(' · ','\n').split('\n')){
+  const row=document.createElement('div');row.style.display='flex';row.style.alignItems='baseline';row.style.gap='7px';
+  let color=palette.find(([label])=>line.startsWith(label))?.[1];
+  if(svg.id==='errorHistory')color=line.startsWith(names[$('favModel').value])?'#286a60':line.startsWith(names.seasonal_naive)?'#a36f3e':color;
+  if(color){const swatch=document.createElement('span');swatch.setAttribute('aria-hidden','true');swatch.style.cssText='display:inline-block;flex:0 0 10px;width:10px;height:10px;border-radius:2px;background:'+color;row.append(swatch)}
+  const label=document.createElement('span');label.textContent=line;row.append(label);floatingTip.append(row);
+ }
+ floatingTip.hidden=false;
+ const rect=svg.getBoundingClientRect(),width=Math.min(260,window.innerWidth-24);
+ floatingTip.style.width=width+'px';
+ const height=Math.min(floatingTip.offsetHeight||170,240),px=event?.clientX??rect.left,py=event?.clientY??rect.bottom;
+ let left=px<(rect.left+rect.right)/2?rect.right-width-10:rect.left+10;
+ let top=py<(rect.top+rect.bottom)/2?rect.bottom-height-10:rect.top+10;
+ // Prefer the clear gutter outside a plot when there is room in the viewport.
+ if(rect.right+width+12<window.innerWidth)left=rect.right+12;
+ else if(rect.left>width+12)left=rect.left-width-12;
+ else if(rect.bottom+height+12<window.innerHeight){top=rect.bottom+10;left=px-width/2;}
+ else if(rect.top>height+12){top=rect.top-height-10;left=px-width/2;}
+ floatingTip.style.left=Math.max(12,Math.min(window.innerWidth-width-12,left))+'px';
+ floatingTip.style.top=Math.max(12,Math.min(window.innerHeight-height-12,top))+'px';
+}
+
+
+const $=id=>document.getElementById(id), colors={actual:"#292620",seasonal_naive:"#a36f3e",ridge_ar:"#697799",lightgbm:"#286a60",sarima:"#9b6676"};
+let latestData=null;
+const chartTime=t=>t?t.slice(0,16).replace("T"," ")+" UTC":"unavailable";
+function chartDetails(d,models=[...visibleForecasts]){const fav=(d?.backtest_fav??[]).filter(r=>models.includes(r.model));return fav.map(r=>names[r.model]+" "+fmt(r.fav_pct)+"%").join(" · ")}
+function chartLegend(node,entries){node.replaceChildren();for(const [label,color,dash]of entries){const span=document.createElement("span"),line=document.createElement("i");line.style.borderColor=color;line.style.borderTopStyle=dash?"dashed":"solid";span.append(line,document.createTextNode(label));node.append(span)}}
+const visibleForecasts=new Set(["seasonal_naive","sarima"]);
+const names={actual:"Actual",seasonal_naive:"Weighted seasonal",ridge_ar:"Ridge AR",lightgbm:"LightGBM",sarima:"SARIMA"};
+const fmt=(v,d=1)=>v==null?"—":Number(v).toLocaleString(undefined,{maximumFractionDigits:d});
+function cell(row,vals){for(const val of vals){const td=document.createElement("td");td.textContent=val;row.append(td)}}
+function draw(data,chartId="chart",tipId="chartTip",readoutId="chartReadout"){
+ hideChartTooltip();const svg=$(chartId);svg.replaceChildren();svg.onpointermove=svg.onpointerdown=svg.onfocus=svg.onblur=svg.onpointerleave=svg.onkeydown=null;$(tipId).hidden=true;$(readoutId).textContent="Hover, tap or use arrow keys to inspect visible series.";const ns="http://www.w3.org/2000/svg";
+ function el(type,attrs){const node=document.createElementNS(ns,type);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,v);svg.append(node);return node}
+ let sets={actual:data.actuals.map(r=>[Date.parse(r.target),r.value])};
+ for(const r of data.forecasts.filter(r=>visibleForecasts.has(r.model)))(sets[r.model]??=[]).push([Date.parse(r.target),r.prediction]);
+ const pts=Object.values(sets).flat();if(!pts.length)return;
+ const band=data.forecasts.filter(r=>visibleForecasts.has(r.model));
+ const ys=[...pts.map(p=>p[1]),...band.flatMap(r=>[r.lower,r.upper])];
+ const xmin=Math.min(...pts.map(p=>p[0])),xmax=Math.max(...pts.map(p=>p[0]));
+ const ymin=Math.min(...ys)-150,ymax=Math.max(...ys)+150;
+ const x=t=>65+(t-xmin)/(xmax-xmin||1)*1110,y=v=>260-(v-ymin)/(ymax-ymin||1)*230;
+ for(let i=0;i<5;i++){let v=ymin+(ymax-ymin)*i/4;el("line",{x1:65,x2:1175,y1:y(v),y2:y(v),stroke:"#b6b0a4"});el("text",{x:0,y:y(v)+4,fill:"#615d55","font-size":12}).textContent=fmt(v,0)}
+ for(const m of visibleForecasts){const ranges=band.filter(r=>r.model===m);if(ranges.length)el("polygon",{points:[...ranges.map(r=>[x(Date.parse(r.target)),y(r.upper)]),...ranges.slice().reverse().map(r=>[x(Date.parse(r.target)),y(r.lower)])].map(p=>p.join(",")).join(" "),fill:colors[m],opacity:".10","data-band":m})}
+ if(ymin<0&&ymax>0){el("line",{x1:65,x2:1175,y1:y(0),y2:y(0),stroke:"#615d55","stroke-width":1.5});el("text",{x:70,y:y(0)-5,fill:"#615d55","font-size":11}).textContent="Zero net grid demand";}
+ for(const [name,points]of Object.entries(sets)){points.sort((a,b)=>a[0]-b[0]);el("polyline",{points:points.map(p=>x(p[0])+","+y(p[1])).join(" "),fill:"none",stroke:colors[name],"stroke-width":name==="actual"?2.5:2,"stroke-dasharray":name==="actual"?"":"8 5","data-series":name})}
+ for(let i=0;i<5;i++){let t=xmin+(xmax-xmin)*i/4;el("text",{x:x(t),y:290,fill:"#615d55","font-size":12,"text-anchor":i===0?"start":i===4?"end":"middle"}).textContent=new Date(t).toISOString().slice(5,16).replace("T"," ")}
+
+ const times=[...new Set(pts.map(p=>p[0]))].sort((a,b)=>a-b);
+ let cursor=times.length-1;
+ const cross=el("line",{x1:0,x2:0,y1:30,y2:260,stroke:"#746e63","stroke-dasharray":"4 4",visibility:"hidden"});
+ const tip=$(tipId);tip.hidden=true;
+ function inspect(i){
+  cursor=Math.max(0,Math.min(times.length-1,i));const t=times[cursor];
+  cross.setAttribute("x1",x(t));cross.setAttribute("x2",x(t));cross.setAttribute("visibility","visible");
+  const lines=[new Date(t).toISOString().slice(0,16).replace("T"," ")+" UTC"];
+  for(const [m,points] of Object.entries(sets)){const p=points.find(p=>p[0]===t);lines.push(names[m]+": "+(p?fmt(p[1])+" MW":"—"))}
+  for(const interval of band.filter(r=>Date.parse(r.target)===t))lines.push(names[interval.model]+" 90%: "+fmt(interval.lower)+" – "+fmt(interval.upper)+" MW");
+  tip.textContent=lines.join("\n");tip.hidden=false;showChartTooltip(svg,tip.textContent,svg.lastPointer);
+
+  $(readoutId).textContent=lines.join(" · ");
+ }
+ svg.onpointermove=event=>{svg.lastPointer=event;
+  const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;
+  const local=point.matrixTransform(svg.getScreenCTM().inverse());
+  const t=xmin+(local.x-65)/1110*(xmax-xmin);
+  let best=0;for(let i=1;i<times.length;i++)if(Math.abs(times[i]-t)<Math.abs(times[best]-t))best=i;
+  inspect(best);
+ };
+ svg.onpointerdown=svg.onpointermove;
+ svg.onpointerleave=()=>{hideChartTooltip();tip.hidden=true;cross.setAttribute("visibility","hidden")};
+ svg.onfocus=()=>inspect(cursor);
+ svg.onblur=()=>{hideChartTooltip();tip.hidden=true;cross.setAttribute("visibility","hidden")};
+ svg.onkeydown=event=>{if(event.key==="ArrowLeft"||event.key==="ArrowRight"){event.preventDefault();inspect(cursor+(event.key==="ArrowRight"?1:-1))}};
+}
+function setView(view){
+ const active=view===true?"history":view===false?"forecast":view;
+ for(const name of ["forecast","history","evolution"]){$(name+"Panel").hidden=name!==active;$(name+"View").setAttribute("aria-pressed",String(name===active))}
+ $("viewTitle").textContent={forecast:"Latest forecast vintage",history:"Historical error + Forecast Added Value",evolution:"Forecast evolution"}[active];
+ if(active==="history")renderHistory();if(active==="evolution")renderEvolution();
+}
+let evolutionRuns=[];
+function initEvolution(){
+ const previousDay=$("evolutionDay").value;
+ const days=[...new Set((latestData?.evolution?.vintages??[]).flatMap(v=>v.forecasts.map(f=>f.target.slice(0,10))))].sort();
+ $("evolutionDay").replaceChildren();
+ for(const day of days){const option=document.createElement("option");option.value=day;option.textContent=day;$("evolutionDay").append(option)}
+ $("evolutionDay").value=days.includes(previousDay)?previousDay:(days[Math.max(0,days.length-2)]??"");
+ filterEvolution();
+}
+function filterEvolution(){
+ const day=$("evolutionDay").value,previous=evolutionRuns[Number($("evolutionSlider").value)]?.id;
+ evolutionRuns=(latestData?.evolution?.vintages??[]).filter(v=>v.forecasts.some(f=>f.target.startsWith(day)));
+ const slider=$("evolutionSlider");slider.max=String(Math.max(0,evolutionRuns.length-1));slider.disabled=!evolutionRuns.length;
+ const preserved=evolutionRuns.findIndex(v=>v.id===previous);
+ slider.value=String(preserved>=0?preserved:Math.max(0,evolutionRuns.length-1));
+ renderEvolution();
+}
+function renderEvolution(){
+ if(latestData)updateChartLabels();
+ const svg=$("evolutionChart");svg.replaceChildren();bindInspection(svg,[],"evolutionReadout",245);
+ const index=Number($("evolutionSlider").value),vintage=evolutionRuns[index],previous=evolutionRuns[index-1];
+ $("evolutionPrev").disabled=index<=0;$("evolutionNext").disabled=index>=evolutionRuns.length-1;
+ if(!vintage){$("evolutionIssued").textContent="No saved forecast vintages for this mode.";return}
+ $("evolutionIssued").textContent="Issued "+vintage.issued_at+" · "+(index+1)+" / "+evolutionRuns.length+(previous?" · previous "+previous.issued_at:" · first available issue");
+ $("evolutionSlider").setAttribute("aria-valuetext",vintage.issued_at);
+ $("evolutionNote").textContent=(latestData.evolution.kind==="evolution"?"Real-data historical simulations at 3-hour origins, separate from daily backtest metrics. ":"Showing up to the latest 96 stored prospective vintages. ")+ "Axes stay fixed while scrubbing this target day. Missing coverage is left blank.";
+ const day=$("evolutionDay").value,model=$("evolutionModel").value||"ridge_ar";
+ const select=v=>(v?.forecasts??[]).filter(f=>f.model===model&&f.target.startsWith(day));
+ const current=select(vintage),old=select(previous),actual=(latestData.evolution.actuals??[]).filter(a=>a.target.startsWith(day));
+ const all=evolutionRuns.flatMap(select),values=[...all.flatMap(f=>[f.lower,f.upper]),...actual.map(a=>a.value)];
+ if(!values.length)return;
+ const ns="http://www.w3.org/2000/svg";function el(type,attrs){const n=document.createElementNS(ns,type);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,v);svg.append(n);return n}
+ const start=Date.parse(day+"T00:00:00Z"),min=Math.min(...values)-100,max=Math.max(...values)+100;
+ const x=t=>70+(Date.parse(t)-start)/86400000*1090,y=v=>245-(v-min)/(max-min)*210;
+ for(let i=0;i<5;i++){const v=min+(max-min)*i/4;el("line",{x1:70,x2:1160,y1:y(v),y2:y(v),stroke:"#b6b0a4"});el("text",{x:0,y:y(v)+4,fill:"#615d55","font-size":12}).textContent=fmt(v,0)}
+ for(let h=0;h<=24;h+=6)el("text",{x:70+h/24*1090,y:278,fill:"#615d55","font-size":12,"text-anchor":"middle"}).textContent=String(h).padStart(2,"0")+":00";
+ for(const [rows,key,color,dash]of [[actual,"value","#292620",""],[old,"prediction","#a36f3e","6 4"],[current,"prediction","#286a60","8 5"]]){
+  let segment=[],last=null;function flush(){if(segment.length)el("polyline",{points:segment.join(" "),fill:"none",stroke:color,"stroke-width":2.5,"stroke-dasharray":dash});segment=[]}
+  for(const r of rows){const t=Date.parse(r.target);if(last!=null&&t-last>900000)flush();segment.push(x(r.target)+","+y(r[key]));last=t}flush();
+ }
+ const times=[...new Set([...current,...old,...actual].map(r=>r.target))].sort();
+ bindInspection(svg,times.map(t=>{const a=current.find(r=>r.target===t),b=old.find(r=>r.target===t),c=actual.find(r=>r.target===t);
+ return {x:x(t),label:t.slice(0,16).replace("T"," ")+" UTC · "+names[model]+"\nSelected: "+fmt(a?.prediction)+" MW · Previous: "+fmt(b?.prediction)+" MW · Change: "+(a&&b?fmt(a.prediction-b.prediction):"—")+" MW\nLatest actual: "+fmt(c?.value)+" MW · Selected 90% interval: "+fmt(a?.lower)+" – "+fmt(a?.upper)+" MW"};
+ }),"evolutionReadout",245);
+}
+function bindInspection(svg,entries,readoutId,bottom){
+ hideChartTooltip();const readout=$(readoutId);
+ readout.textContent=entries.length?"Hover, tap, or focus the chart and use arrow keys to inspect values.":"No scored data available.";
+ svg.onpointermove=svg.onpointerdown=svg.onfocus=svg.onkeydown=svg.onpointerleave=svg.onblur=null;
+ if(!entries.length)return ()=>{};
+ const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+ for(const [k,v] of Object.entries({x1:0,x2:0,y1:25,y2:bottom,stroke:"#746e63","stroke-dasharray":"4 4","pointer-events":"none",visibility:"hidden"}))line.setAttribute(k,v);
+ svg.append(line);let cursor=0;
+ function inspect(i){
+  cursor=Math.max(0,Math.min(entries.length-1,i));const entry=entries[cursor];
+  line.setAttribute("x1",entry.x);line.setAttribute("x2",entry.x);line.setAttribute("visibility","visible");
+  readout.textContent=entry.label;showChartTooltip(svg,entry.label,svg.lastPointer);
+ }
+ svg.onpointermove=event=>{svg.lastPointer=event;
+  const p=svg.createSVGPoint();p.x=event.clientX;p.y=event.clientY;
+  const local=p.matrixTransform(svg.getScreenCTM().inverse());
+  let i=0;for(let j=1;j<entries.length;j++)if(Math.abs(entries[j].x-local.x)<Math.abs(entries[i].x-local.x))i=j;
+  inspect(i);
+ };
+ svg.onpointerdown=svg.onpointermove;svg.onfocus=()=>inspect(cursor);
+ svg.onkeydown=event=>{
+  if(["ArrowLeft","ArrowRight","Home","End"].includes(event.key)){
+   event.preventDefault();inspect(event.key==="Home"?0:event.key==="End"?entries.length-1:cursor+(event.key==="ArrowRight"?1:-1));
+  }
+ };
+ svg.onpointerleave=svg.onblur=()=>{hideChartTooltip();line.setAttribute("visibility","hidden")};
+ return inspect;
+}
+
+function renderHistory(){
+ const rows=(latestData?.performance_history??[]).filter(r=>r.model===$("favModel").value&&r.baseline===$("baseline").value);
+ $("historySubtitle").textContent=names[$("favModel").value]+" versus "+names[$("baseline").value]+" · change selections in the FAV panel above";
+ $("historyRows").replaceChildren();
+ for(const r of rows){const tr=document.createElement("tr");cell(tr,[r.date,fmt(r.model_mae_mw),fmt(r.baseline_mae_mw),r.fav_pct==null?"Undefined (zero baseline error)":fmt(r.fav_pct)+"%",fmt(r.n,0)]);$("historyRows").append(tr)}
+ function plot(id,fields,isFav){
+  const svg=$(id);svg.replaceChildren();bindInspection(svg,[],id+"Readout",205);const ns="http://www.w3.org/2000/svg";
+  function el(type,attrs){const node=document.createElementNS(ns,type);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,v);svg.append(node);return node}
+  const values=rows.flatMap(r=>fields.map(f=>r[f])).filter(v=>v!=null);
+  if(!values.length){el("text",{x:70,y:100,fill:"#615d55","font-size":16}).textContent=rows.length?"FAV undefined: baseline error is zero.":"No matched, scored history yet.";return}
+  const low=isFav?Math.min(0,...values):0,high=Math.max(1,...values),pad=(high-low)*.12;
+  const min=isFav?low-pad:0,max=high+pad;
+  const dates=rows.map(r=>Date.parse(r.date+"T00:00:00Z")),first=dates[0],last=dates[dates.length-1];
+  const x=t=>last===first?620:75+(t-first)/(last-first)*1090,y=v=>205-(v-min)/(max-min)*175;
+  for(let i=0;i<5;i++){const v=min+(max-min)*i/4;el("line",{x1:75,x2:1165,y1:y(v),y2:y(v),stroke:"#b6b0a4"});el("text",{x:0,y:y(v)+4,fill:"#615d55","font-size":12}).textContent=fmt(v)+(isFav?"%":"")}
+  if(isFav)el("line",{x1:75,x2:1165,y1:y(0),y2:y(0),stroke:"#746e63","stroke-dasharray":"5 5"});
+  fields.forEach((f,j)=>{
+   let segment=[];
+   function flush(){if(segment.length)el("polyline",{points:segment.join(" "),fill:"none",stroke:j?"#a36f3e":"#286a60","stroke-width":2.5});segment=[]}
+   rows.forEach((r,i)=>{if(r[f]==null){flush();return}if(i&&dates[i]-dates[i-1]>86400000)flush();
+    segment.push(x(dates[i])+","+y(r[f]));
+    const dot=el("circle",{cx:x(dates[i]),cy:y(r[f]),r:5,fill:isFav&&r[f]<0?"#9b3b31":j?"#a36f3e":"#286a60",tabindex:0});
+    const label=r.date+" · "+(isFav?"FAV":j?names[r.baseline]:names[r.model])+": "+fmt(r[f])+(isFav?"%":" MW")+" · n="+r.n;
+    dot.setAttribute("aria-label",label);dot.onfocus=()=>svg.inspectEntry(i);
+   });flush();
+  });
+  svg.inspectEntry=bindInspection(svg,rows.map((r,i)=>({x:x(dates[i]),label:r.date+" UTC · "+fmt(r.n,0)+" matched predictions\n"+names[r.model]+": "+fmt(r.model_mae_mw)+" MW MAE · "+names[r.baseline]+": "+fmt(r.baseline_mae_mw)+" MW MAE\nFAV: "+(r.fav_pct==null?"undefined (zero baseline MAE)":fmt(r.fav_pct)+"%")})),id+"Readout",205);
+  const stride=Math.max(1,Math.ceil(rows.length/7));
+  rows.forEach((r,i)=>{if(i%stride===0||i===rows.length-1)el("text",{x:x(dates[i]),y:235,fill:"#615d55","font-size":12,"text-anchor":"middle"}).textContent=r.date.slice(5)});
+ }
+ plot("errorHistory",["model_mae_mw","baseline_mae_mw"],false);plot("favHistory",["fav_pct"],true);
+}
+function renderFav(){
+ if(latestData)updateChartLabels();
+ renderHistory();
+ const r=latestData?.forecast_added_value?.find(r=>r.model===$("favModel").value&&r.baseline===$("baseline").value);
+ $("fav").textContent=r?.fav_pct==null?"—":(r.fav_pct>0?"+":"")+fmt(r.fav_pct)+"%";
+ $("fav").className=r?.fav_pct<0?"negative":"positive";
+ $("favMW").textContent=r?fmt(r.mae_saved_mw)+" MW":"—";$("favMW").className=r?.mae_saved_mw<0?"negative":"positive";
+ $("favN").textContent=r?fmt(r.n,0):"—";
+ $("favPair").textContent=r?fmt(r.baseline_mae_mw)+" → "+fmt(r.model_mae_mw)+" MW MAE":"No matched scored forecasts";
+ $("favStatus").textContent=!r?"Awaiting matched actuals":r.fav_pct==null?"Undefined: baseline MAE is zero":r.fav_pct<0?"More error than the naive baseline":r.fav_pct===0?"No error reduction":"Less error than the naive baseline";
+}
+function renderLeads(){
+ const metric=$("leadMetric").value, models=["seasonal_naive","ridge_ar","lightgbm","sarima"],rows=latestData?.by_horizon??[];
+ const hours=latestData?.kind==="outlook"?[6,12,18,24,30,36,42,48]:[6,12,18,24],groupWidth=1100/hours.length;
+ const svg=$("leadChart");svg.replaceChildren();$("horizons").replaceChildren();
+ const ns="http://www.w3.org/2000/svg";
+ function el(type,attrs){const node=document.createElementNS(ns,type);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,v);svg.append(node);return node}
+ const max=Math.max(1,...rows.map(r=>r[metric]??0))*1.15;
+ for(let i=0;i<=4;i++){const y=245-i*205/4;el("line",{x1:65,x2:1180,y1:y,y2:y,stroke:"#b6b0a4"});el("text",{x:4,y:y+4,fill:"#615d55","font-size":12}).textContent=fmt(max*i/4)}
+ hours.forEach((h,i)=>{
+  const tr=document.createElement("tr"),vals=[(h-6)+"–"+h+" h"];
+  models.forEach((m,j)=>{const r=rows.find(r=>r.hours===h&&r.model===m),value=r?.[metric];vals.push(value==null?"—":fmt(value)+(metric==="wape_pct"?"%":" MW"));
+   if(value!=null){const height=value/max*205;const bar=el("rect",{x:75+i*groupWidth+j*groupWidth/5,y:245-height,width:groupWidth/6,height,fill:colors[m],rx:3,tabindex:0,"aria-label":names[m]+", "+(h-6)+"–"+h+" hours: "+fmt(value)});
+   bar.onfocus=()=>svg.inspectEntry(i)}
+  });cell(tr,vals);$("horizons").append(tr);
+  el("text",{x:75+i*groupWidth+groupWidth*.4,y:277,fill:"#615d55","font-size":14,"text-anchor":"middle"}).textContent=(h-6)+"–"+h+" h";
+ });
+ const metricLabel={mae_mw:"MAE",rmse_mw:"RMSE",wape_pct:"WAPE"}[metric],unit=metric==="wape_pct"?"%":" MW";
+ svg.inspectEntry=bindInspection(svg,rows.length?hours.map((h,i)=>({x:75+i*groupWidth+groupWidth*.4,label:(h-6)+"–"+h+" hours · "+metricLabel+"\n"+models.map(m=>{const r=rows.find(r=>r.hours===h&&r.model===m);return names[m]+": "+(r?.[metric]==null?"—":fmt(r[metric])+unit)+" (n="+fmt(r?.n,0)+")"}).join(" · ")})):[],"leadChartReadout",245);
+
+}
+function initMonitoring(){
+ const runs=latestData?.monitoring??[];const old=$("driftRun").value;$("driftRun").replaceChildren();
+ for(const r of runs){const o=document.createElement("option");o.value=r.run_id;o.textContent=r.cutoff.slice(0,16).replace("T"," ")+" UTC";$("driftRun").append(o)}
+ $("driftRun").value=runs.some(r=>r.run_id===old)?old:(runs[0]?.run_id??"");renderMonitoring();
+ $("reliability").replaceChildren();for(const r of latestData.leaderboard){const tr=document.createElement("tr");cell(tr,[names[r.model],fmt(r.bias_mw),fmt(r.p95_abs_error_mw),fmt(r.coverage_90_pct)+"%",fmt(r.mean_width_mw),fmt(r.interval_score_90)]);$("reliability").append(tr)}
+}
+function renderMonitoring(){
+ const r=(latestData?.monitoring??[]).find(r=>r.run_id===$("driftRun").value),d=r?.comparisons[$("driftFeature").value||"demand"];
+ const svg=$("driftChart");svg.replaceChildren();$("driftMetrics").replaceChildren();bindInspection(svg,[],"driftReadout",245);
+ $("driftWindow").textContent=r?"Training: "+r.reference_start+" → "+r.cutoff+" · New data: "+r.cutoff+" → "+r.current_end+" (exclusive ends). "+r.availability+" · "+r.status:"No saved training vintage in this mode.";
+ if(!d?.density){$("driftReadout").textContent="Awaiting post-training observations; no drift result is fabricated.";return}
+ function el(type,a){const n=document.createElementNS("http://www.w3.org/2000/svg",type);for(const[k,v]of Object.entries(a))n.setAttribute(k,v);svg.append(n);return n}
+ const points=d.density,max=Math.max(...points.flatMap(p=>[p.reference,p.current]),1e-9)*1.1;
+ const left=points[0].x,right=points[points.length-1].x,x=v=>65+(v-left)/(right-left||1)*1110,y=v=>245-210*v/max;
+ for(let i=0;i<5;i++){const v=max*i/4,yy=y(v);el("line",{x1:65,x2:1175,y1:yy,y2:yy,stroke:"#b6b0a4"});el("text",{x:0,y:yy+4,fill:"#615d55","font-size":12}).textContent=v.toExponential(1)}
+ for(const[key,color]of [["reference","#697799"],["current","#286a60"]]){
+  el("polygon",{points:[[65,245],...points.map(p=>[x(p.x),y(p[key])]),[1175,245]].map(p=>p.join(",")).join(" "),fill:color,opacity:.18});
+  el("polyline",{points:points.map(p=>x(p.x)+","+y(p[key])).join(" "),fill:"none",stroke:color,"stroke-width":2.5});
+ }
+ for(let i=0;i<5;i++){const v=left+(right-left)*i/4;el("text",{x:x(v),y:275,fill:"#615d55","font-size":12,"text-anchor":i===0?"start":i===4?"end":"middle"}).textContent=fmt(v,0)}
+ bindInspection(svg,points.map(p=>({x:x(p.x),label:fmt(p.x)+" MW · Training density: "+p.reference.toExponential(3)+" · New density: "+p.current.toExponential(3)+" per MW"})),"driftReadout",245);
+ const rows=[["Observations",d.reference_n+" / "+d.current_n,"Training / new; unequal sample sizes are normalized"],["PSI",fmt(d.psi,3),d.psi==null?"Undefined for low-variation reference":d.psi>.2?"Investigate distribution change (>0.20)":"Below 0.20 review threshold"],["KS distance",fmt(d.ks_distance,3),"Maximum CDF gap, 0–1; exploratory test p-values below"],["Mean shift · MW",fmt(d.mean_shift_mw),"New mean minus training mean"],["Standardized mean shift",fmt(d.standardized_mean_shift,3),"Mean shift / training standard deviation"],["Standard deviation ratio",fmt(d.std_ratio,3),"New / training; 1 means equal spread"],["Outside training range",fmt(d.outside_training_range_pct)+"%","New values beyond training minimum or maximum"],["P95 · MW",fmt(d.reference_p95)+" / "+fmt(d.current_p95),"Training / new upper-tail value"],["New-window missingness",fmt(r.current_missing_pct)+"%","Expected 15-minute observations missing; never imputed"]];
+ rows.push(["Wasserstein distance · MW",fmt(d.wasserstein_mw),"Average displacement between distributions; effect size"]);
+ for(const row of rows){const tr=document.createElement("tr");cell(tr,row);$("driftMetrics").append(tr)}
+ const pformat=p=>p==null?"—":p<.0001?p.toExponential(2):fmt(p,4);
+ for(const t of d.tests??[]){const tr=document.createElement("tr");cell(tr,[t.name,fmt(t.statistic,4),"Raw p="+pformat(t.p_value)+" · Holm-adjusted p="+pformat(t.holm_p_value)+" (exploratory iid test)"]);$("driftMetrics").append(tr)}
+}
+
+function renderRegions(){
+ const multi=$("layout").value==="regions";$("regionalPanels").hidden=!multi;$("singleChart").hidden=multi;
+ if(!multi)return;
+ const container=$("regionalPanels");container.replaceChildren();
+ for(const [i,d]of (latestData?.regional_previews??[]).entries()){
+  const article=document.createElement("article"),heading=document.createElement("h3");heading.textContent=d.name;article.append(heading);
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.id="regionalChart"+i;svg.setAttribute("viewBox","0 0 1200 310");svg.setAttribute("tabindex","0");svg.setAttribute("role","img");svg.setAttribute("aria-label",d.name+" forecast");article.append(svg);
+  const tip=document.createElement("div");tip.id="regionalTip"+i;tip.className="regional-values";tip.hidden=true;article.append(tip);
+  const readout=document.createElement("p");readout.id="regionalReadout"+i;readout.className="inspection";readout.textContent="Hover, tap or use arrow keys to inspect.";article.append(readout);
+  const legend=document.createElement("div");legend.className="chart-legend";article.append(legend);chartLegend(legend,[["Actual",colors.actual,false],...[...visibleForecasts].map(m=>[names[m],colors[m],true])]);const caption=document.createElement("p");caption.className="chart-caption";caption.textContent=chartDetails(d);article.append(caption);container.append(article);draw(d,svg.id,tip.id,readout.id);
+ }
+}
+async function refresh(){
+ try{
+ const kind=$("kind").value,region=$("region").value||"NEM";let d;if(window.GRIDCAST_SAMPLE&&!window.GRIDCAST_CONFIG?.apiBase){d=window.GRIDCAST_SAMPLE[kind]?.[region];if(!d)throw Error("Mode unavailable in this sample");}else{const res=await fetch((window.GRIDCAST_CONFIG?.apiBase??"").replace(/\/$/,"")+"/v1/dashboard?mode="+kind+"&region="+region,{signal:AbortSignal.timeout(15000)});if(!res.ok)throw Error("Could not read dashboard data");d=await res.json();}$("error").textContent="";
+ $("banner").textContent=kind==="backtest"?"REAL AEMO DATA · Seven daily rolling backtest origins. Final-vintage history; historical publication delays are not reconstructed.":kind==="outlook"?"48-HOUR SAMPLE OUTLOOK · Stored forecasts through the end of the following market day. Historical sample, not today’s live demand.":kind==="sample"?"SAMPLE-END FORECAST · A real-data forecast issued at the historical sample boundary. It is not a current live forecast.":"PROSPECTIVE LEDGER · New forecasts appear when the connector has recent, complete training history. No synthetic records.";
+ $("scopeLabel").textContent=d.region_name+" · "+(d.data_range?.start?.slice(0,10)??"—")+" to "+(d.data_range?.end?.slice(0,10)??"—")+" UTC";
+ $("export").href=(window.GRIDCAST_SAMPLE&&!window.GRIDCAST_CONFIG?.apiBase)?"exports/"+kind+"-"+region+".csv":(window.GRIDCAST_CONFIG?.apiBase??"").replace(/\/$/,"")+"/v1/forecasts.csv?mode="+kind+"&region="+region;
+ const meta=d.latest_run?.metadata;
+ $("vintage").textContent=d.latest_run?"Issued "+d.latest_run.issued_at+" · training cutoff "+d.latest_run.train_cutoff:"No forecasts for this mode yet.";
+ $("models").replaceChildren();for(const r of d.leaderboard){const tr=document.createElement("tr");cell(tr,[r.model,fmt(r.n,0),fmt(r.mae_mw),fmt(r.rmse_mw),fmt(r.wape_pct)+"%",fmt(r.bias_mw),fmt(r.coverage_90_pct)+"%",fmt(r.skill_vs_baseline_pct)+"%"]);$("models").append(tr)}
+ latestData=d;updateChartLabels();initMonitoring();renderFav();renderLeads();initEvolution();
+ $("diagnostics").textContent=JSON.stringify(meta?{drift:meta.drift,training_missing_fraction:meta.training_missing_fraction,fit_seconds:meta.duration_seconds,training_sha256:meta.training_sha256}: {},null,2);
+ $("events").textContent=JSON.stringify(d.events[0]??{},null,2);draw(d);renderRegions();
+ }catch(e){$("error").textContent=e.message}
+}
+function updateChartLabels(){
+ $("forecastUpdate").textContent="Last forecast update: "+chartTime(latestData?.latest_run?.created_at);
+ const info=chartDetails(latestData),fav=(latestData?.forecast_added_value??[]).find(r=>r.model===$("favModel").value),selected=names[$("favModel").value];
+ for(const id of ["chart","errorHistory","favHistory","evolutionChart","leadChart","driftChart"])$(id+"Meta").textContent=info;
+ for(const id of ["errorHistory","favHistory"])$(id+"Meta").textContent="Selected model FAV (current mode): "+(fav?fmt(fav.fav_pct)+"%":"awaiting actuals");
+ $("leadChartMeta").textContent=chartDetails(latestData,Object.keys(colors));
+ $("evolutionChartMeta").textContent=chartDetails(latestData,[$("evolutionModel").value])+" · FAV is backtest context, not an unscored-vintage result.";
+ $("driftChartMeta").textContent=info+" · FAV is forecast-performance context, not a distribution metric.";
+ chartLegend($("chartLegend"),[["Actual",colors.actual,false],...[...visibleForecasts].map(m=>[names[m],colors[m],true]),...[...visibleForecasts].map(m=>[names[m]+" 90% range",colors[m],false])]);
+ chartLegend($("errorHistoryLegend"),[[selected+" MAE","#286a60",false],["Baseline MAE","#a36f3e",false]]);
+ chartLegend($("favHistoryLegend"),[[selected+" FAV","#286a60",false]]);
+ chartLegend($("evolutionChartLegend"),[["Actual","#292620",false],["Previous vintage","#a36f3e",true],["Selected vintage","#286a60",true]]);
+ chartLegend($("leadChartLegend"),Object.keys(colors).filter(m=>m!=="actual").map(m=>[names[m],colors[m],false]));
+ chartLegend($("driftChartLegend"),[["Training distribution","#697799",false],["New observations","#286a60",false]]);
+}
+
+function renderForecastControls(){
+ $("forecastControls").replaceChildren();$("legend").replaceChildren();
+ for(const model of ["seasonal_naive","ridge_ar","lightgbm","sarima"]){
+  const button=document.createElement("button");button.id="toggle-"+model;button.type="button";button.textContent=names[model];button.setAttribute("aria-pressed",String(visibleForecasts.has(model)));button.style.borderColor=colors[model];
+  button.onclick=()=>{if(visibleForecasts.has(model))visibleForecasts.delete(model);else visibleForecasts.add(model);button.setAttribute("aria-pressed",String(visibleForecasts.has(model)));if(latestData){updateChartLabels();draw(latestData);renderRegions()}};$("forecastControls").append(button);
+ }
+
+}
+if(typeof document.addEventListener==='function')document.addEventListener('portfolio-theme',()=>{Object.assign(colors,{actual:'#eef4fb',seasonal_naive:'#d5a361',ridge_ar:'#9bafe2',lightgbm:'#65c5b1',sarima:'#e7a5bb'});renderForecastControls();if(latestData){draw(latestData);renderRegions();updateChartLabels()}});
+renderForecastControls();
+$("driftRun").onchange=renderMonitoring;$("driftFeature").onchange=renderMonitoring;
+$("favModel").onchange=renderFav;$("baseline").onchange=renderFav;$("leadMetric").onchange=renderLeads;
+$("forecastView").onclick=()=>setView(false);$("historyView").onclick=()=>setView(true);
+$("evolutionView").onclick=()=>setView("evolution");
+$("evolutionDay").onchange=filterEvolution;$("evolutionModel").onchange=renderEvolution;$("evolutionSlider").oninput=renderEvolution;
+$("evolutionPrev").onclick=()=>{$("evolutionSlider").value=String(Math.max(0,Number($("evolutionSlider").value)-1));renderEvolution()};
+$("evolutionNext").onclick=()=>{$("evolutionSlider").value=String(Math.min(evolutionRuns.length-1,Number($("evolutionSlider").value)+1));renderEvolution()};
+$("region").onchange=refresh;$("layout").onchange=renderRegions;
+$("kind").onchange=refresh;refresh();setInterval(refresh,30000);
+</script></body></html>

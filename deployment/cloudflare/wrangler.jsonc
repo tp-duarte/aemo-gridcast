@@ -1,0 +1,7 @@
+{
+  "name": "gridcast-read-api",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-29",
+  "r2_buckets": [{"binding": "DATA", "bucket_name": "gridcast"}],
+  "vars": {"ALLOWED_ORIGIN": "https://soft-gray-studio.lovable.app"}
+}

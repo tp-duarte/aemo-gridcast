@@ -1,0 +1,35 @@
+name: Gridcast hourly inference
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gridcast-r2-single-writer
+  cancel-in-progress: false
+jobs:
+  forecast:
+    if: vars.GRIDCAST_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+      R2_BUCKET: ${{ vars.R2_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            requirements-lock.txt
+            requirements-cloud.txt
+      - run: python -m pip install -r requirements-cloud.txt
+      - name: Ingest, load saved models, forecast, evaluate and publish read snapshot
+        run: python -m gridcast.hourly hourly --work .hourly-work
