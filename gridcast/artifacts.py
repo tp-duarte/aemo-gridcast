@@ -8,6 +8,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from .models import features,seasonal_baseline
 from .tuning import design,CANDIDATES
 from .data import REGIONS,STEP
+from .direct import training as direct_training,predict as direct_predict
 
 def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def sarima_state(fit,order,seasonal_order,offsets):
@@ -36,11 +37,14 @@ def train_bundle(data,selection,cutoff,directory):
  'training_rows':len(train),'data_sha256':hashlib.sha256(train.to_csv().encode()).hexdigest(),
  'selection':selection,'regions':{},'models':['seasonal_naive','lightgbm','sarima']}
  for region in REGIONS:
-  tick=time.perf_counter();s=train[region];x,y=design(s.to_numpy(),s.index)
+  tick=time.perf_counter();s=train[region]
   frozen=selection.get('candidate_specs',CANDIDATES)
   name=selection['winners'][region]['lightgbm'];params=frozen[name]['parameters'];linear=params.get('linear_tree',False)
+  architecture=frozen[name].get('architecture','recursive')
+  if architecture not in ['recursive','direct_baseline_residual']:raise ValueError('Unknown model architecture')
+  x,y=direct_training(s,cutoff) if architecture=='direct_baseline_residual' else design(s.to_numpy(),s.index)
   mean=x.mean(0) if linear else np.zeros(x.shape[1]);scale=x.std(0) if linear else np.ones(x.shape[1]);scale[scale<1e-8]=1
-  gb=LGBMRegressor(**params,random_state=42,n_jobs=1,verbosity=-1,deterministic=True,force_col_wise=True,objective='regression').fit((x-mean)/scale,y)
+  gb=LGBMRegressor(**{'objective':'regression',**params},random_state=42,n_jobs=1,verbosity=-1,deterministic=True,force_col_wise=True).fit((x-mean)/scale,y)
   gbpath=directory/f'{region}.lightgbm.txt';gb.booster_.save_model(str(gbpath));gb_seconds=time.perf_counter()-tick;tick=time.perf_counter()
   name_s=selection['winners'][region]['sarima'];sp=frozen[name_s]['parameters']
   hourly=s.resample('1h',origin=cutoff).mean().to_numpy();shaped=s.iloc[-28*96:].to_numpy().reshape(-1,4);offsets=(shaped-shaped.mean(1,keepdims=True)).mean(0)
@@ -48,7 +52,7 @@ def train_bundle(data,selection,cutoff,directory):
    fit=SARIMAX(hourly,order=sp['order'],seasonal_order=sp['seasonal_order'],trend='n',simple_differencing=False,enforce_stationarity=True,enforce_invertibility=True).fit(disp=False,maxiter=sp['maxiter'],cov_type='none',low_memory=True)
   state=sarima_state(fit,sp['order'],sp['seasonal_order'],offsets)
   if not state['converged']:raise ValueError(f'SARIMA fit failed convergence for {region}; no model promotion')
-  entry={'lightgbm':{'candidate':name,'file':gbpath.name,'sha256':digest(gbpath),'bytes':gbpath.stat().st_size,'mean':mean.tolist(),'scale':scale.tolist(),'fit_seconds':gb_seconds},
+  entry={'lightgbm':{'candidate':name,'architecture':architecture,'correction_weight':frozen[name].get('correction_weight',1.),'file':gbpath.name,'sha256':digest(gbpath),'bytes':gbpath.stat().st_size,'mean':mean.tolist(),'scale':scale.tolist(),'fit_seconds':gb_seconds},
    'sarima':{**state,'candidate':name_s,'fit_seconds':time.perf_counter()-tick,'warnings':[str(w.message) for w in caught]}}
   spec['regions'][region]=entry
  body=json.dumps(spec,sort_keys=True,allow_nan=False).encode();spec['model_id']=hashlib.sha256(body).hexdigest()[:24]
@@ -76,8 +80,11 @@ class ModelBundle:
    recent=s.reindex(required)
    if not np.isfinite(recent.to_numpy()).all():raise ValueError('Missing recent observations; forecast withheld')
    info=self.meta['regions'][region];gb=info['lightgbm'];history=list(recent.to_numpy());pred=[]
-   for t in targets:
-    value=float(self.models[region].predict(((np.asarray(features(history,t))-gb['mean'])/gb['scale']).reshape(1,-1),num_threads=1)[0]);pred.append(value);history.append(value)
+   if gb.get('architecture','recursive')=='direct_baseline_residual':
+    pred=direct_predict(self.models[region],s,origin,horizon,np.asarray(gb['mean']),np.asarray(gb['scale']),gb.get('correction_weight',1.))
+   else:
+    for t in targets:
+     value=float(self.models[region].predict(((np.asarray(features(history,t))-gb['mean'])/gb['scale']).reshape(1,-1),num_threads=1)[0]);pred.append(value);history.append(value)
    since=s.reindex(pd.date_range(cutoff,origin,freq=STEP,inclusive='left')) if origin>cutoff else s.iloc[:0]
    if not np.isfinite(since.to_numpy()).all():raise ValueError('Missing observations since SARIMA state cutoff')
    hourly=since.to_numpy().reshape(-1,4).mean(1) if len(since) else []

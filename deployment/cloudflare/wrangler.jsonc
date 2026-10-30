@@ -2,6 +2,23 @@
   "name": "gridcast-read-api",
   "main": "worker.mjs",
   "compatibility_date": "2026-10-29",
-  "r2_buckets": [{"binding": "DATA", "bucket_name": "gridcast"}],
-  "vars": {"ALLOWED_ORIGIN": "https://soft-gray-studio.lovable.app"}
+  "r2_buckets": [
+    {
+      "binding": "DATA",
+      "bucket_name": "gridcast"
+    }
+  ],
+  "vars": {
+    "ALLOWED_ORIGIN": "https://thiago-duarte.tp-duarte.workers.dev"
+  },
+  "account_id": "505ff4a42fea97a1a306019e2cfe0237",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1
+    }
+  }
 }

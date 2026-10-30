@@ -5,7 +5,7 @@
   },
   {
     "path": "gridcast/artifacts.py",
-    "sha256": "93eb941531d78c65b85393f9657aa891524953e36cb1747101fdb0c9af584933"
+    "sha256": "b1b8e9d828466a06213f3005cb618c1a00aa02bb1046b40524a144b16ddef9ba"
   },
   {
     "path": "gridcast/batch.py",
@@ -18,6 +18,10 @@
   {
     "path": "gridcast/data.py",
     "sha256": "67f7dcc746bc861674717c75a98cb518c00f56009487d4e5a155806b08e8522c"
+  },
+  {
+    "path": "gridcast/direct.py",
+    "sha256": "8a209ca50463e2a86308429552817219a6e14d36b31e5eddc4f775ccec01f51f"
   },
   {
     "path": "gridcast/hourly.py",
@@ -69,7 +73,7 @@
   },
   {
     "path": "gridcast/dashboard.html",
-    "sha256": "5e19b79d72af832513954d3421aae9a24e89f2462adfcc03756c925bd24d08f6"
+    "sha256": "0789a36b390d759eacf7b3bdb1fa53378a6bc12cd6432fe9f9a2987a8baa4e71"
   },
   {
     "path": "pyproject.toml",
@@ -89,7 +93,7 @@
   },
   {
     "path": "deployment/selected-models.json",
-    "sha256": "dbd02affa4458afc12193e68f09500cf062f5b07f92a0669d84edc052906262a"
+    "sha256": "38f38e422e694722bd946e14a84f246c0eee152eb77b4b27bc6028f43286b550"
   },
   {
     "path": "deployment/cloudflare/worker.mjs",
@@ -97,7 +101,7 @@
   },
   {
     "path": "deployment/cloudflare/wrangler.jsonc",
-    "sha256": "8acd6c5611f348ed590b078ab1ce515697f4cbd33dfc07d2c83eb8758a3d07c5"
+    "sha256": "2c7887e7cd11599d508178af7086091aff310fc231cdb019cdd241d68b417e7a"
   },
   {
     "path": "deployment/github/hourly.yml",
@@ -130,6 +134,10 @@
   {
     "path": "tests/test_dispatch_cache.py",
     "sha256": "26f2973bb9112fec14af00b42e89989069214c165e8fdd9556dc5873e430c7ce"
+  },
+  {
+    "path": "tests/test_direct.py",
+    "sha256": "c319559fecefb5de481f8cb7bf5a8941ff48f8f79e48cb7a5079d70f2bd49654"
   },
   {
     "path": "tests/test_worker.mjs",

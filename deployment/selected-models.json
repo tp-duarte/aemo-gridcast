@@ -6,7 +6,7 @@
       "sarima": "sarima_sma"
     },
     "QLD1": {
-      "lightgbm": "lgb_2_linear1",
+      "lightgbm": "qld_direct_l1",
       "sarima": "sarima_sma"
     },
     "VIC1": {
@@ -53,6 +53,27 @@
         ],
         "maxiter": 60
       }
+    },
+    "qld_direct_l1": {
+      "family": "lightgbm",
+      "architecture": "direct_baseline_residual",
+      "correction_weight": 1.0,
+      "parameters": {
+        "n_estimators": 220,
+        "learning_rate": 0.035,
+        "num_leaves": 15,
+        "max_depth": 5,
+        "min_child_samples": 120,
+        "reg_lambda": 15,
+        "objective": "regression_l1",
+        "linear_tree": false
+      }
     }
+  },
+  "qld_revision": {
+    "validation": "2025-08 through 2026-07, equal-month mean MAE ratio",
+    "selection": "direct_l1, correction weight 1",
+    "confirmation": "2026-09 held-out test; 9.4963% FAV versus baseline",
+    "August": "used for diagnosis, not a fresh confirmation test"
   }
 }
