@@ -6,6 +6,11 @@ let r=await worker.fetch(new Request('https://api.example/v1/dashboard?region=NE
 r=await worker.fetch(new Request('https://api.example/models/current.json'),env);assert.equal(r.status,404);
 r=await worker.fetch(new Request('https://api.example/v1/dashboard?region=../../models'),env);assert.equal(r.status,400);
 r=await worker.fetch(new Request('https://api.example/v1/dashboard',{headers:{Origin:'https://other.example'}}),env);assert.equal(r.status,403);
+env.ALLOWED_ORIGINS='https://tpduarte.com,https://www.tpduarte.com,https://portfolio.example';
+for(const origin of ['https://tpduarte.com','https://www.tpduarte.com','https://portfolio.example']){
+ r=await worker.fetch(new Request('https://api.example/v1/dashboard',{headers:{Origin:origin}}),env);assert.equal(r.status,200);assert.equal(r.headers.get('Access-Control-Allow-Origin'),origin);
+}
+r=await worker.fetch(new Request('https://api.example/v1/dashboard',{headers:{Origin:'https://tpduarte.com.attacker.example'}}),env);assert.equal(r.status,403);
 r=await worker.fetch(new Request('https://api.example/v1/dashboard?mode=backtest'),env);assert.equal(r.status,400);
 r=await worker.fetch(new Request('https://api.example/v1/forecasts.csv?region=NSW1'),env);assert.equal(r.status,200);assert.match(r.headers.get('Content-Type'),/text\/csv/);
 issued=new Date(Date.now()-91*60*1000).toISOString();r=await worker.fetch(new Request('https://api.example/health'),env);assert.equal(r.status,503);

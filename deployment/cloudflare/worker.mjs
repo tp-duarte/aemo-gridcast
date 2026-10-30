@@ -3,7 +3,8 @@ export default {
  async fetch(request,env){
   const url=new URL(request.url),origin=request.headers.get('Origin');
   const cors={'Vary':'Origin','Access-Control-Allow-Methods':'GET, OPTIONS','Access-Control-Allow-Headers':'Content-Type'};
-  if(origin){if(origin!==env.ALLOWED_ORIGIN)return new Response('Origin not allowed',{status:403});cors['Access-Control-Allow-Origin']=origin;}
+  const allowedOrigins=(env.ALLOWED_ORIGINS||env.ALLOWED_ORIGIN||'').split(',').map(value=>value.trim()).filter(Boolean);
+  if(origin){if(!allowedOrigins.includes(origin))return new Response('Origin not allowed',{status:403});cors['Access-Control-Allow-Origin']=origin;}
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
   if(request.method!=='GET')return new Response('Read-only API',{status:405,headers:cors});
   if(!['/health','/v1/dashboard','/v1/forecasts.csv'].includes(url.pathname))return new Response('Not found',{status:404,headers:cors});

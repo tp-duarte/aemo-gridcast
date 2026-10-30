@@ -97,11 +97,11 @@
   },
   {
     "path": "deployment/cloudflare/worker.mjs",
-    "sha256": "e4a8942b44d69a7267b580f0cac632cfd5a48cf421a43c45352de2bf0b068308"
+    "sha256": "d822e9ff20fcbfe236a2836bfae47b41bc6c6617ed4bf7834bf1513897b5c98f"
   },
   {
     "path": "deployment/cloudflare/wrangler.jsonc",
-    "sha256": "2c7887e7cd11599d508178af7086091aff310fc231cdb019cdd241d68b417e7a"
+    "sha256": "be47df78387254c7b3f7fd5b7f656eae5f8c59d577f64dff75cb408009de8453"
   },
   {
     "path": "deployment/github/hourly.yml",
@@ -141,6 +141,6 @@
   },
   {
     "path": "tests/test_worker.mjs",
-    "sha256": "c13bb950f0a8e05d2b3678607181104cedc40c26d91973eb3eac59ed0a6d40dc"
+    "sha256": "729908c19af72c716e6b1caf04f1c0428596f4517d36bfec36c52e78baf0ada0"
   }
 ]

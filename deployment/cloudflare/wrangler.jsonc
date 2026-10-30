@@ -9,7 +9,7 @@
     }
   ],
   "vars": {
-    "ALLOWED_ORIGIN": "https://thiago-duarte.tp-duarte.workers.dev"
+    "ALLOWED_ORIGINS": "https://tpduarte.com,https://www.tpduarte.com,https://thiago-duarte.tp-duarte.workers.dev"
   },
   "account_id": "505ff4a42fea97a1a306019e2cfe0237",
   "workers_dev": true,
