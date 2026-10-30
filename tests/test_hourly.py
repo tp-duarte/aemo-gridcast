@@ -34,6 +34,8 @@ class HourlyTests(unittest.TestCase):
     again=cycle(objects,work,Source(now+pd.Timedelta(hours=1)),now+pd.Timedelta(hours=1));self.assertFalse(again['forecast_created']);self.assertEqual(again['new_scores'],0)
     pointer=json.loads(objects.get('public/current.json'));payload=json.loads(objects.get('public/snapshots/'+pointer['snapshot']+'/NEM.json'))
     self.assertEqual(payload['kind'],'live');self.assertGreater(len(payload['forecast_added_value']),0)
+    self.assertEqual(payload['latest_run']['train_cutoff'],Bundle.meta['cutoff'])
+    self.assertNotEqual(payload['latest_run']['forecast_origin'],Bundle.meta['cutoff'])
     self.assertEqual(payload['backtest_fav'],[])
     with self.assertRaises(ValueError):objects.delete_public_cache(first)
     with self.assertRaises(ValueError):objects.get('../outside')

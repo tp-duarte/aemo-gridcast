@@ -95,7 +95,7 @@ def public_payloads(actuals,forecasts,scores,bundle,received,reference,monitorin
  for r in SERIES:
   f=forecasts[forecasts.region==r];s=scores[scores.region==r] if len(scores) else pd.DataFrame()
   latest=f.sort_values('issued_at').iloc[-1];run=f[f.run_id==latest.run_id];series=w[r].dropna();origin=latest.origin
-  metadata={'model_id':latest.model_id,'train_rows':bundle.meta['training_rows'],'train_start':bundle.meta['train_start'],'nominal_horizon':96,
+  metadata={'model_id':latest.model_id,'model_train_cutoff':bundle.meta['cutoff'],'train_rows':bundle.meta['training_rows'],'train_start':bundle.meta['train_start'],'nominal_horizon':96,
    'availability':'prospective received observations; saved model inference','negative_values':'preserved','interval_method':'90% past residual quantile by 6-hour bucket','drift':drift(series,origin)}
   horizon=[]
   if len(s):horizon=[{'model':m,'hours':int(b),**metrics(g)} for (m,b),g in s.assign(bucket=((s.horizon-1)//24+1)*6).groupby(['model','bucket'])]
@@ -120,7 +120,7 @@ def public_payloads(actuals,forecasts,scores,bundle,received,reference,monitorin
   fav=forecast_added_value(s) if len(s) else []
   actual_context=series.loc[origin-pd.Timedelta(days=5):].tail(480)
   result[r]={'schema_version':'1.0','source':'aemo','region':r,'region_name':NAMES[r],'kind':'live','available_modes':['live'],'generated_at':received.isoformat(),'data_updated_at':actuals.seen_at.max().isoformat(),
-   'latest_run':{'id':latest.run_id,'issued_at':latest.issued_at.isoformat(),'created_at':latest.issued_at.isoformat(),'train_cutoff':origin.isoformat(),'metadata':metadata},
+   'latest_run':{'id':latest.run_id,'issued_at':latest.issued_at.isoformat(),'created_at':latest.issued_at.isoformat(),'train_cutoff':bundle.meta['cutoff'],'forecast_origin':origin.isoformat(),'metadata':metadata},
    'forecasts':run[['model','target','prediction','lower','upper','horizon']].assign(target=lambda x:x.target.map(lambda t:t.isoformat())).to_dict('records'),
    'leaderboard':leaderboard(s) if len(s) else [],'forecast_added_value':fav,'backtest_fav':[],
    'performance_history':performance_history(s) if len(s) else [],'by_horizon':horizon,'monitoring':monitor,
