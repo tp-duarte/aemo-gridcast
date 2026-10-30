@@ -73,7 +73,7 @@
   },
   {
     "path": "gridcast/dashboard.html",
-    "sha256": "5ff1948064de91f7c8d0a3c561f237d1b7f1d801b47ed399332369258fb2d477"
+    "sha256": "fd62a87ca31e95568d8e222226fcdd1227f4bee0056befd5447b4ac9cc1bcff0"
   },
   {
     "path": "pyproject.toml",
