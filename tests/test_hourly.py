@@ -2,11 +2,23 @@ import unittest,tempfile,json
 from pathlib import Path
 from unittest.mock import patch
 import numpy as np,pandas as pd
-from gridcast.hourly import cycle,parquet,wide,merge_actuals
+from gridcast.hourly import cycle,parquet,wide,merge_actuals,evaluated,normalize_times
 from gridcast.object_store import LocalObjects
 from gridcast.data import REGIONS
 
 class HourlyTests(unittest.TestCase):
+ def test_mixed_arrow_timestamp_precision_preserves_evaluation_identity(self):
+  t=pd.Timestamp('2026-10-30T16:00Z');seen=pd.Timestamp('2026-10-30T16:29:44.192331Z')
+  actual=pd.DataFrame({'region':list(REGIONS),'target':[t]*5,'value':[100.]*5,'seen_at':[seen]*5})
+  actual['seen_at']=actual.seen_at.dt.as_unit('us')
+  forecast=pd.DataFrame({'region':[*REGIONS,'NEM'],'target':[t]*6,'prediction':[100.]*5+[500.]})
+  scored=evaluated(forecast,actual)
+  self.assertEqual(str(scored.actual_seen_at.dtype),'datetime64[ns, UTC]')
+  previous=scored.copy();previous['actual_seen_at']=previous.actual_seen_at.dt.as_unit('us')
+  previous=normalize_times(previous)
+  joined=scored.merge(previous[['region','target','actual_seen_at']],on=['region','target','actual_seen_at'])
+  self.assertEqual(len(joined),6)
+  self.assertTrue((joined.actual_seen_at==seen).all())
  def test_local_two_hour_cycle_scores_without_overwriting_forecasts(self):
   with tempfile.TemporaryDirectory(dir=Path.cwd()) as tmp:
    root=Path(tmp);objects=LocalObjects(root/'objects');now=pd.Timestamp('2026-01-03T14:17Z')
@@ -32,6 +44,9 @@ class HourlyTests(unittest.TestCase):
     b=cycle(objects,work,Source(now+pd.Timedelta(hours=1)),now+pd.Timedelta(hours=1));self.assertGreater(b['new_scores'],0)
     self.assertEqual(saved,objects.get(first))
     again=cycle(objects,work,Source(now+pd.Timedelta(hours=1)),now+pd.Timedelta(hours=1));self.assertFalse(again['forecast_created']);self.assertEqual(again['new_scores'],0)
+    later=now+pd.Timedelta(hours=1,minutes=30,microseconds=192331)
+    recovered=cycle(objects,work,Source(later),later);self.assertFalse(recovered['forecast_created']);self.assertGreater(recovered['new_scores'],0)
+    self.assertEqual(saved,objects.get(first))
     pointer=json.loads(objects.get('public/current.json'));payload=json.loads(objects.get('public/snapshots/'+pointer['snapshot']+'/NEM.json'))
     self.assertEqual(payload['kind'],'live');self.assertGreater(len(payload['forecast_added_value']),0)
     self.assertEqual(payload['latest_run']['train_cutoff'],Bundle.meta['cutoff'])

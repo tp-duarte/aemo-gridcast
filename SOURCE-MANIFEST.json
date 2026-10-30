@@ -25,7 +25,7 @@
   },
   {
     "path": "gridcast/hourly.py",
-    "sha256": "d24e763cfcc70744b91b31063d5b03e7f6142170cd1d327ace275038024609a6"
+    "sha256": "be9abfc249de4b326e124e72a242fcd50e1e7a19b360032f926a5d1addfff57b"
   },
   {
     "path": "gridcast/metrics.py",
@@ -117,7 +117,7 @@
   },
   {
     "path": "tests/test_hourly.py",
-    "sha256": "49e94b078b9db62ba06a5858f7a9e8b5a94da7074b0ab9fbb22aaa1977143cf9"
+    "sha256": "95c7ad570b1f92fa5fcfb377a6b8b5aeaf344027c91343cd9a530234d43f98bf"
   },
   {
     "path": "tests/test_tuning.py",

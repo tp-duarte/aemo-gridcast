@@ -19,7 +19,16 @@ MODELS=('seasonal_naive','lightgbm','sarima');SERIES=(*REGIONS,'NEM')
 def encode(value):return json.dumps(value,allow_nan=False,default=str,separators=(',',':')).encode()
 def parquet(frame):
  b=io.BytesIO();frame.to_parquet(b,index=False,compression='zstd');return b.getvalue()
-def load_frame(objects,key):return pd.read_parquet(io.BytesIO(objects.get(key)))
+def normalize_times(frame):
+ # Arrow may reload microsecond timestamps while new pandas rows use nanoseconds.
+ # Normalize before concat/joins so observation revisions retain stable identities.
+ frame=frame.copy()
+ for column in ('target','seen_at','actual_seen_at','issued_at','origin'):
+  if column in frame:
+   frame[column]=pd.to_datetime(frame[column],utc=True,format='mixed').astype('datetime64[ns, UTC]')
+ return frame
+
+def load_frame(objects,key):return normalize_times(pd.read_parquet(io.BytesIO(objects.get(key))))
 def maybe_frame(objects,key):
  try:return load_frame(objects,key)
  except FileNotFoundError:return pd.DataFrame()
@@ -30,7 +39,7 @@ def merge_actuals(old,incoming,received):
  for region,series in incoming.items():
   if region=='NEM':continue
   rows.extend({'region':region,'target':t,'value':float(v),'seen_at':received} for t,v in series.items())
- new=pd.DataFrame(rows)
+ new=normalize_times(pd.DataFrame(rows));old=normalize_times(old)
  if old.empty:return new.sort_values(['region','target'])
  indexed=old.set_index(['region','target']);incoming=new.set_index(['region','target'])
  changed=~incoming.index.isin(indexed.index)
@@ -41,11 +50,11 @@ def merge_actuals(old,incoming,received):
 
 def evaluated(forecasts,actuals):
  if forecasts.empty:return pd.DataFrame()
- a=actuals.copy();w=wide(a);valid=w.dropna();seen=a.groupby('target').seen_at.max().reindex(valid.index)
+ a=normalize_times(actuals);forecasts=normalize_times(forecasts);w=wide(a);valid=w.dropna();seen=a.groupby('target').seen_at.max().reindex(valid.index)
  nem=pd.DataFrame({'region':'NEM','target':valid.index,'value':valid.sum(axis=1).to_numpy(),'seen_at':seen.to_numpy()})
  a=pd.concat([a,nem],ignore_index=True).rename(columns={'value':'actual','seen_at':'actual_seen_at'})
  scored=forecasts.merge(a,on=['region','target'],how='inner',validate='many_to_one');scored['error']=scored.prediction-scored.actual
- return scored
+ return normalize_times(scored)
 
 def interval_widths(scores,cutoff):
  cutoff=pd.Timestamp(cutoff);s=scores[(scores.target<cutoff)&(scores.target>=cutoff-pd.Timedelta(days=30))]
