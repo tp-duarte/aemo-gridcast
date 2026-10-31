@@ -1,4 +1,14 @@
-# Gridcast — Australian regional demand forecasting
+# Gridcast — Australian Electricity Demand Forecasting
+
+[**Explore the interactive project →**](https://tpduarte.com/projects) · [Full dashboard](https://tpduarte.com/dashboard) · [Methodology](https://tpduarte.com/methodology)
+
+Hourly electricity demand forecasts across five Australian regions, with model comparisons and performance tracked against actual demand.
+
+[![Five regional electricity demand charts: New South Wales/ACT, Queensland, Victoria, South Australia and Tasmania, with actual demand, forecasts and prediction ranges](docs/images/five-region-forecast.jpg)](https://tpduarte.com/regional-preview)
+
+*Static snapshot of saved forecasts issued on 31 October 2026 at 00:48 UTC (30 October at 21:48 BRT). Click the image to explore the interactive charts, hover over values and toggle models. The screenshot does not refresh automatically; current forecasts and evaluation results are available on the site. Early live FAV scores reflect a small sample and differ from the separate held-out backtest.*
+
+GitHub README pages do not support the JavaScript/iframe embedding required by these charts. The interactive version runs on the existing Cloudflare site; this linked preview requires no additional hosting service.
 
 Source-only release for hourly forecasts of NSW, Queensland, Victoria, South Australia and Tasmania. Regional forecasts are summed to produce the NEM total.
 
