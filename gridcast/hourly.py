@@ -8,8 +8,8 @@ from pathlib import Path
 from contextlib import ExitStack
 import numpy as np
 import pandas as pd
-from .data import REGIONS,NAMES,STEP,utc,stamp
-from .aemo import DispatchSource,aggregate
+from .data import REGIONS,NAMES,STEP,utc,stamp,MARKET_TZ
+from .aemo import DispatchSource,aggregate,download_months,read_monthly
 from .artifacts import ModelBundle,train_bundle,digest
 from .object_store import LocalObjects,R2Objects
 from .metrics import leaderboard,forecast_added_value,performance_history,metrics,drift
@@ -141,6 +141,28 @@ def public_payloads(actuals,forecasts,scores,bundle,received,reference,monitorin
  for item in result.values():item['regional_previews']=previews
  return result
 
+def recover_missing_dispatch(raw, actuals, start, end, work):
+ # Backfill completed quarters between the last saved observation and dispatch.
+ grid = pd.date_range(start, end, freq=STEP, inclusive='left')
+ gaps = wide(actuals).reindex(grid).isna()
+ if not gaps.any().any():
+  return raw
+ additions = []
+ for region in REGIONS:
+  quarters = gaps.index[gaps[region]]
+  if quarters.empty:
+   continue
+  print(f"Checking AEMO monthly TRADE data for {region}: {len(quarters)} missing quarters, first {quarters[0]}", flush=True)
+  ends = quarters.union(quarters + pd.Timedelta(minutes=5)).union(quarters + pd.Timedelta(minutes=10)) + pd.Timedelta(minutes=5)
+  months = sorted(set(quarters.tz_convert(MARKET_TZ).strftime('%Y%m')))
+  directory = work/'backfill'/region
+  files = download_months(directory, months, regions=[region])
+  official = read_monthly([directory/'raw'/entry['file'] for entry in files])
+  additions.append(official[official.end.isin(ends)].assign(source='AEMO monthly TRADE'))
+ # Prefer dispatch for individual five-minute observations already received.
+ combined = pd.concat([raw.assign(source='AEMO dispatch'), *additions], ignore_index=True)
+ return combined.drop_duplicates(['region','end'], keep='first')
+
 def cycle(objects,work,source=None,received=None):
  work=Path(work);work.mkdir(parents=True,exist_ok=True);received=utc() if received is None else pd.Timestamp(received)
  old=load_frame(objects,'state/actuals.parquet')
@@ -148,6 +170,11 @@ def cycle(objects,work,source=None,received=None):
  reports=max(24,min(288,int(np.ceil(age.total_seconds()/300))+24))
  source=source or DispatchSource(work/'dispatch-cache',max_reports=reports)
  raw=source.fetch();incoming,quality=aggregate(raw,received);actuals=merge_actuals(old,incoming,received);data=wide(actuals)
+ last_complete=wide(old).dropna().index[-1]
+ observed_end=raw.end.max().floor('15min')
+ recovered=recover_missing_dispatch(raw,actuals,last_complete,observed_end,work)
+ if recovered is not raw:
+  raw=recovered;incoming,quality=aggregate(raw,received);actuals=merge_actuals(old,incoming,received);data=wide(actuals)
  end=data.dropna().index[-1]+STEP
  if received-end>pd.Timedelta(minutes=30) or end>received:raise ValueError('Stale or future observations; no live forecast published')
  bundle,calibration=load_models(objects,work/'models');anchor=end.floor('h')

@@ -25,7 +25,7 @@
   },
   {
     "path": "gridcast/hourly.py",
-    "sha256": "be9abfc249de4b326e124e72a242fcd50e1e7a19b360032f926a5d1addfff57b"
+    "sha256": "36322a5a9fd1dc50ea3475f171f71ae178d23dff14fa89429ebb14258c349905"
   },
   {
     "path": "gridcast/metrics.py",
