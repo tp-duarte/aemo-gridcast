@@ -2,7 +2,7 @@ import unittest,tempfile,json
 from pathlib import Path
 from unittest.mock import patch
 import numpy as np,pandas as pd
-from gridcast.hourly import cycle,parquet,wide,merge_actuals,evaluated,normalize_times
+from gridcast.hourly import cycle,parquet,wide,merge_actuals,evaluated,normalize_times,recover_missing_dispatch,load_frame
 from gridcast.object_store import LocalObjects
 from gridcast.data import REGIONS
 
@@ -39,7 +39,10 @@ class HourlyTests(unittest.TestCase):
      return pd.DataFrame([{'region':r,'end':t,'value':101+i} for i,r in enumerate(REGIONS) for t in times])
    cal={'calibration_end_exclusive':str(index[200]),'widths':{r:{m:[20]*4 for m in ['seasonal_naive','lightgbm','sarima']} for r in [*REGIONS,'NEM']}}
    with patch('gridcast.hourly.load_models',return_value=(Bundle(),cal)):
-    a=cycle(objects,work,Source(now),now);self.assertTrue(a['forecast_created']);self.assertEqual(a['new_scores'],0)
+    with patch('gridcast.hourly.recover_missing_dispatch',wraps=recover_missing_dispatch) as recovery:
+     a=cycle(objects,work,Source(now),now)
+     self.assertEqual(recovery.call_args.args[2],index[0])
+    self.assertTrue(a['forecast_created']);self.assertEqual(a['new_scores'],0)
     first=objects.keys('forecasts/')[0];saved=objects.get(first)
     b=cycle(objects,work,Source(now+pd.Timedelta(hours=1)),now+pd.Timedelta(hours=1));self.assertGreater(b['new_scores'],0)
     self.assertEqual(saved,objects.get(first))
@@ -54,4 +57,10 @@ class HourlyTests(unittest.TestCase):
     self.assertEqual(payload['backtest_fav'],[])
     with self.assertRaises(ValueError):objects.delete_public_cache(first)
     with self.assertRaises(ValueError):objects.get('../outside')
+    before=objects.keys('forecasts/')
+    with patch.object(Bundle,'predict',side_effect=ValueError('Missing recent observations')):
+     with self.assertRaisesRegex(ValueError,'Missing recent'):
+      cycle(objects,work,Source(now+pd.Timedelta(hours=2)),now+pd.Timedelta(hours=2))
+    self.assertEqual(before,objects.keys('forecasts/'))
+    self.assertGreater(load_frame(objects,'state/actuals.parquet').target.max(),now+pd.Timedelta(hours=1))
 if __name__=='__main__':unittest.main()
