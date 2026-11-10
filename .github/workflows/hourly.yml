@@ -1,5 +1,8 @@
 name: Gridcast hourly inference
 on:
+  push:
+    paths:
+      - .github/workflows/hourly.yml
   schedule:
     # Second attempt recovers missed triggers. The ledger is idempotent per UTC hour.
     - cron: '17,47 * * * *'
@@ -13,7 +16,7 @@ jobs:
   forecast:
     if: vars.GRIDCAST_ENABLED == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       OPENBLAS_NUM_THREADS: '1'
       OMP_NUM_THREADS: '1'
@@ -33,4 +36,16 @@ jobs:
             requirements-cloud.txt
       - run: python -m pip install -r requirements-cloud.txt
       - name: Ingest, load saved models, forecast, evaluate and publish read snapshot
-        run: python -m gridcast.hourly hourly --work .hourly-work
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if python -m gridcast.hourly hourly --work .hourly-work; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Forecast attempt $attempt failed; retrying after 60 seconds."
+              sleep 60
+            fi
+          done
+          echo "::error::Forecast failed after three attempts; inspect missing observations or source availability."
+          exit 1
