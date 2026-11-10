@@ -27,3 +27,13 @@ issued='invalid';r=await worker.fetch(new Request('https://api.example/v1/dashbo
 issued=new Date(Date.now()+120000).toISOString();r=await worker.fetch(new Request('https://api.example/v1/dashboard'),env);assert.equal(r.status,503);
 const empty={...env,DATA:{async get(){return null;}}};r=await worker.fetch(new Request('https://api.example/v1/dashboard'),empty);assert.equal(r.status,503);
 assert(reads.every(k=>k.startsWith('public/')));console.log('Worker routing, CORS, private-key isolation, CSV and stale-forecast checks passed.');
+
+const archiveReads=[];
+const archiveEnv={...env,DATA:{async get(key){archiveReads.push(key);if(key==='public/archive/index.json')return {async json(){return {revision:'20261110T113845783284',dates:['2026-10-30']}}};return {body:'archive-content'};}}};
+for(const suffix of ['dashboard?date=2026-10-30&region=QLD1','forecasts.csv?date=all&region=NEM']){
+ r=await worker.fetch(new Request('https://api.example/v1/'+suffix),archiveEnv);assert.equal(r.status,200);assert.equal(await r.text(),'archive-content');assert.equal(r.headers.get('Cache-Control'),'no-store');
+}
+r=await worker.fetch(new Request('https://api.example/v1/archive'),archiveEnv);assert.deepEqual((await r.json()).dates,['2026-10-30']);
+for(const query of ['date=2026-10-29','date=../../models','date=all&region=PRIVATE']){r=await worker.fetch(new Request('https://api.example/v1/dashboard?'+query),archiveEnv);assert.equal(r.status,404);}
+assert(!archiveReads.includes('public/current.json'));assert(archiveReads.every(k=>k.startsWith('public/archive/')));console.log('Archive dates, CSV, invalid selection and independence from live pointer passed.');
+
