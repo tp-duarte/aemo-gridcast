@@ -1,0 +1,10 @@
+{
+  "name": "gridcast-scheduler",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-10",
+  "workers_dev": true,
+  "r2_buckets": [{"binding":"DATA","bucket_name":"gridcast"}],
+  "triggers": {"crons":["12,27,42,57 * * * *"]},
+  "observability": {"enabled":true,"traces":{"enabled":true}},
+  "limits": {"cpu_ms":10}
+}
