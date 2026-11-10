@@ -7,6 +7,15 @@ from gridcast.object_store import LocalObjects
 from gridcast.data import REGIONS
 
 class HourlyTests(unittest.TestCase):
+ def test_recovery_repairs_internal_hole_before_latest_complete_reading(self):
+  times=pd.date_range('2026-11-08T08:00Z',periods=5,freq='15min')
+  actual=pd.DataFrame([{'region':r,'target':t,'value':100.,'seen_at':times[-1]} for r in REGIONS for t in times if t!=times[1]])
+  raw=pd.DataFrame([{'region':r,'end':times[-1]+pd.Timedelta(minutes=5),'value':101.} for r in REGIONS])
+  official=pd.DataFrame([{'region':r,'end':times[1]+pd.Timedelta(minutes=m),'value':100.} for r in REGIONS for m in [5,10,15]])
+  with patch('gridcast.hourly.download_months',return_value=[{'file':'fixture.csv'}]),patch('gridcast.hourly.read_monthly',return_value=official):
+   result=recover_missing_dispatch(raw,actual,times[0],times[-1],Path('unused-test-cache'))
+  self.assertEqual(len(result),len(raw)+15)
+  self.assertEqual(set(result[result.source=='AEMO monthly TRADE'].end),set(official.end))
  def test_mixed_arrow_timestamp_precision_preserves_evaluation_identity(self):
   t=pd.Timestamp('2026-10-30T16:00Z');seen=pd.Timestamp('2026-10-30T16:29:44.192331Z')
   actual=pd.DataFrame({'region':list(REGIONS),'target':[t]*5,'value':[100.]*5,'seen_at':[seen]*5})
@@ -64,3 +73,4 @@ class HourlyTests(unittest.TestCase):
     self.assertEqual(before,objects.keys('forecasts/'))
     self.assertGreater(load_frame(objects,'state/actuals.parquet').target.max(),now+pd.Timedelta(hours=1))
 if __name__=='__main__':unittest.main()
+
