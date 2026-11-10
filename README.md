@@ -12,6 +12,40 @@ GitHub README pages do not support the JavaScript/iframe embedding required by t
 
 Source-only release for hourly forecasts of NSW, Queensland, Victoria, South Australia and Tasmania. Regional forecasts are summed to produce the NEM total.
 
+## Data and model flow
+
+```mermaid
+flowchart TD
+  A["AEMO dispatch reports<br/>5-minute regional demand"] --> C["Validate timestamps and completeness<br/>Aggregate to 15-minute demand"]
+  B["AEMO monthly TRADE files"] -->|"Recover missing readings"| C
+  C --> D[("R2 actual demand history")]
+  H["Historical training data"] --> V["12 monthly expanding validation folds<br/>Separate held-out test month"]
+  V --> P["Selected model configurations"]
+  P --> T["Monthly training job"]
+  D --> T
+  T --> M[("R2 versioned model bundles")]
+  D --> F["Hourly forecast job<br/>GitHub Actions, best-effort scheduling"]
+  M --> F
+  F --> L["Regional LightGBM and SARIMA<br/>Weighted seasonal baseline"]
+  L --> N["Five regional forecasts + summed NEM<br/>24 hours at 15-minute intervals"]
+  N --> S[("Immutable saved forecast issues in R2")]
+  S --> E["Match each issue and target with actual demand"]
+  D --> E
+  E --> Q["MAE, RMSE, bias, coverage and FAV<br/>Daily performance and lead-time errors"]
+  D --> R["Training-versus-new-data drift monitoring"]
+  M --> R
+  Q --> LIVE["Latest 7-day live dashboard snapshot"]
+  R --> LIVE
+  S --> ARCH["Archive publisher<br/>All saved issues from October 30"]
+  E --> ARCH
+  ARCH --> DATE["UTC issue-date views and all-date history<br/>JSON + evaluated CSV"]
+  LIVE --> API["Cloudflare read API"]
+  DATE --> API
+  API --> WEB["tpduarte.com dashboard<br/>Forecasts, evolution, errors and FAV"]
+```
+
+In the dashboard, select **Saved forecast archive**, then a UTC issue date or **All saved dates**. **Historical error + FAV** groups evaluated forecasts by target date. **Forecast evolution** compares saved forecast issues. Archive scores use the latest available actual observations. Hours without a saved forecast remain gaps.
+
 ## Model release
 
 The locked LightGBM configuration uses 250 trees, learning rate 0.04, 31 leaves, maximum depth 6, minimum 80 observations per leaf, L2 regularization 10, `linear_tree=true`, and `linear_lambda=10`. Numeric inputs are standardized using training data only. Forecasts recursively cover the next 24 hours in 15-minute intervals.
@@ -42,3 +76,4 @@ node tests/test_worker.mjs
 The included runtime tests generate their own fixtures. Audits that depend on the original large historical sample and its SQLite ledgers remain in the separate research workspace. `SOURCE-MANIFEST.json` records the copied runtime source hashes.
 
 No credentials, personal portfolio assets, fitted models, downloaded observations or private experimental reports belong in this repository. The repository is prepared for publication; its existence does not mean that cloud resources or an active schedule have been created.
+
