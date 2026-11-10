@@ -16,7 +16,7 @@ There is no public dispatch endpoint. `/health` reports configuration and the la
 
 ## Required credential
 
-The Worker and timer are deployed, but cannot dispatch until its secret is supplied:
+The Worker, timer and secret are configured. Automatic dispatch was verified on November 10, 2026 at 12:12 UTC: [GitHub run 42813743318](https://github.com/tp-duarte/aemo-gridcast/actions/runs/42813743318) succeeded, stored the immutable `20261110T12` forecast issue in R2, and published all five regions plus NEM to the live dashboard. The following steps are for initial setup or credential renewal:
 
 1. Create a fine-grained GitHub personal access token restricted to `tp-duarte/aemo-gridcast`, with repository **Actions: Read and write**. Set an expiration and arrange renewal.
 2. Cloudflare → Workers & Pages → `gridcast-scheduler` → Settings → Variables and Secrets → Add **Secret** named `GITHUB_DISPATCH_TOKEN`.
