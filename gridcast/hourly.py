@@ -170,14 +170,22 @@ def cycle(objects,work,source=None,received=None):
  reports=max(24,min(288,int(np.ceil(age.total_seconds()/300))+24))
  source=source or DispatchSource(work/'dispatch-cache',max_reports=reports)
  raw=source.fetch();incoming,quality=aggregate(raw,received);actuals=merge_actuals(old,incoming,received);data=wide(actuals)
- last_complete=wide(old).dropna().index[-1]
+ bundle,calibration=load_models(objects,work/'models')
+ # Later complete readings do not prove that the intervening history is complete.
+ # SARIMA consumes every observation since its saved state; LightGBM needs 7 days.
+ recovery_start=max(data.index[0],min(pd.Timestamp(bundle.meta['cutoff']),received.floor('h')-pd.Timedelta(days=7)))
  observed_end=raw.end.max().floor('15min')
- recovered=recover_missing_dispatch(raw,actuals,last_complete,observed_end,work)
+ recovered=recover_missing_dispatch(raw,actuals,recovery_start,observed_end,work)
  if recovered is not raw:
   raw=recovered;incoming,quality=aggregate(raw,received);actuals=merge_actuals(old,incoming,received);data=wide(actuals)
+ # Preserve received observations even if a model cannot yet forecast. A retry
+ # can repair the remaining gaps instead of discarding the ingestion progress.
+ suffix=received.strftime('%Y%m%dT%H%M%S%f')
+ objects.put('observations/'+received.strftime('%Y-%m-%d')+'/'+suffix+'.parquet',parquet(raw.assign(received_at=received)),immutable=True)
+ objects.put('state/actuals.parquet',parquet(actuals))
  end=data.dropna().index[-1]+STEP
  if received-end>pd.Timedelta(minutes=30) or end>received:raise ValueError('Stale or future observations; no live forecast published')
- bundle,calibration=load_models(objects,work/'models');anchor=end.floor('h')
+ anchor=end.floor('h')
  if pd.Timestamp(calibration['calibration_end_exclusive'])>anchor:raise ValueError('Future calibration leakage')
  if anchor-pd.Timestamp(calibration['calibration_end_exclusive'])>pd.Timedelta(days=90):raise ValueError('Calibration stale; refresh required')
  rid=received.strftime('%Y%m%dT%H')+'-'+bundle.meta['model_id'];key='forecasts/'+received.strftime('%Y-%m-%d')+'/'+rid+'.parquet'
@@ -198,7 +206,6 @@ def cycle(objects,work,source=None,received=None):
  delta=scores if previous.empty else scores.merge(previous[keys].assign(_old=True),on=keys,how='left').query('_old != True').drop(columns='_old')
  suffix=received.strftime('%Y%m%dT%H%M%S%f')
  if len(delta):objects.put('evaluations/'+received.strftime('%Y-%m-%d')+'/'+suffix+'.parquet',parquet(delta),immutable=True)
- objects.put('observations/'+received.strftime('%Y-%m-%d')+'/'+suffix+'.parquet',parquet(raw.assign(received_at=received)),immutable=True)
  reference=pd.read_parquet(work/'models/training_reference.parquet');monitor=None
  try:
   cached=json.loads(objects.get('state/monitoring.json'))
