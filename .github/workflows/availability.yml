@@ -1,0 +1,31 @@
+name: Website and forecast availability
+on:
+  schedule:
+    - cron: '8,23,38,53 * * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/availability.yml
+      - gridcast/availability.py
+permissions:
+  contents: read
+concurrency:
+  group: gridcast-availability
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m gridcast.availability
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: availability-report
+          path: availability-report.json
+          retention-days: 30
+
